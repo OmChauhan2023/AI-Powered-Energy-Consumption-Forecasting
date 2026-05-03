@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: energy-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./outputs:/app/outputs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - energy-network
+    restart: unless-stopped
+
+  # Streamlit Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: energy-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+    depends_on:
+      - api
+    networks:
+      - energy-network
+    restart: unless-stopped
+
+  # Optional: PostgreSQL for metrics storage
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: energy-postgres
+  #   environment:
+  #     POSTGRES_DB: energy_metrics
+  #     POSTGRES_USER: energy_user
+  #     POSTGRES_PASSWORD: changeme
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - energy-network
+  #   restart: unless-stopped
+
+networks:
+  energy-network:
+    driver: bridge
+
+# volumes:
+#   postgres_data:

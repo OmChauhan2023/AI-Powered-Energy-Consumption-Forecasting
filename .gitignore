@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Data (Optional: if you want to keep data out of Git, but 1MB is fine)
+# Energy Consumption Dataset.xlsx
+# Energy Consumption Dataset.csv
+
+# IDEs
+.vscode/
+.idea/
+.gemini/

@@ -1,0 +1,10 @@
+{
+  "best_weight_strategy": "Nelder-Mead",
+  "weights": "(0.006458469218813446, 0.347694608899842, 0.6458469218813446)",
+  "weights_inv_mae": "(0.27881411356445984, 0.3447787701463331, 0.376407116289207)",
+  "weights_grid_search": "(0.05, 0.3, 0.65)",
+  "weights_nelder_mead": "(0.006458469218813446, 0.347694608899842, 0.6458469218813446)",
+  "top_features": "['lag_1h', 'lag_2h', 'covid_deviation', 'hour', 'lag_24h', 'hour_cos', 'lag_8736h', 'hour_sin', 'lag_168h', 'day_of_week', 'roll_max_6h', 'roll_std_6h', 'roll_std_12h', 'doy_cos', 'doy_sin', 'lag_336h', 'hour_x_season', 'hour_x_weekend', 'lag_72h', 'roll_min_6h', 'lag_3h', 'lag_48h', 'roll_mean_24h', 'roll_std_24h', 'day_of_year', 'roll_min_24h', 'dow_sin', 'is_night', 'is_weekday', 'roll_max_24h', 'roll_std_48h', 'lag_12h', 'roll_max_12h', 'roll_min_48h', 'roll_max_48h']",
+  "val_mae": "{'xgb': 53.215048529858684, 'lgb': 43.033701227732216, 'cat': 39.41771008585923, 'ens_inv_mae': 39.89936883520313, 'ens_grid': 37.87913677780772, 'ens_nelder_mead': 37.71674191393665, 'ens_best': 37.71674191393665}",
+  "test_metrics": "{'best_ensemble': {'MAE': 28.64131804442337, 'RMSE': 39.03101577774326, 'MAPE': 0.3172130014229869, 'SMAPE': 0.31763726201721465}}"
+}
