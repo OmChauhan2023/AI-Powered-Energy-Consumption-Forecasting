@@ -3,7 +3,6 @@
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -11,7 +10,7 @@
 
 This is a **production-grade energy consumption forecasting system** built for the **Powermind Hackathon** by **Team Eagle**. It predicts hourly electricity consumption for the Australian energy grid with **23% accuracy improvement** over baseline using an ensemble of gradient boosting models.
 
-**Key Achievement:** Ensemble MAE of **28.33 MWh** (23% improvement from baseline 36.99)
+**Key Achievement:** Ensemble MAE of **28.33 MWh** (23% improvement from baseline 37.00)
 
 ---
 
@@ -407,14 +406,6 @@ cd frontend && npm run dev
 docker-compose up -d
 ```
 
-### Cloud (Recommended for Production)
-- **Render** - FastAPI service ($0-10/month)
-- **Streamlit Cloud** - Dashboard (free)
-- **DigitalOcean App Platform** - Both services ($10-50/month)
-- **AWS/GCP/Azure** - Full scalability options
-
-See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions.
-
 ---
 
 ## ⚙️ Configuration
@@ -470,22 +461,6 @@ Scalability:
 
 ---
 
-## 🤝 Contributing
-
-This is a hackathon project. For modifications:
-1. Read TECHNICAL_DOCUMENTATION.md for architecture
-2. Understand the 4-agent system design
-3. Test changes locally before pushing
-4. Update documentation for any changes
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file
-
----
-
 ## 🙋 Support & Questions
 
 - **API Documentation:** http://localhost:8000/docs
@@ -496,8 +471,6 @@ MIT License - See LICENSE file
 ---
 
 ## 🎯 Project Status
-
-✅ **Complete & Production-Ready**
 - ✓ 4-Agent system fully implemented
 - ✓ Ensemble ML models trained & optimized
 - ✓ FastAPI backend with 10+ endpoints
