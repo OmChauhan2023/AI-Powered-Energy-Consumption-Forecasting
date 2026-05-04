@@ -149,29 +149,113 @@ class InferenceAgent:
 
     def forecast_ahead(self, current_data: pd.DataFrame, features: List[str],
                        steps: int = 24) -> Tuple[np.ndarray, np.ndarray]:
-        """Forecast multiple steps ahead using recursive strategy."""
+        """
+        Forecast multiple steps ahead using recursive strategy.
+        Properly updates lag, rolling, and time-of-day features at every step.
+        """
         self.logger.info(f"Forecasting {steps} steps ahead...")
+
+        # Build a rolling buffer of recent consumption values for lag/rolling updates
+        # Use the last 336 hours (2 weeks) as history buffer
+        BUFFER = 336
+        history = list(current_data['consumption_mwh'].values[-BUFFER:])
+
+        # Grab the last timestamp so we can advance the clock each step
+        last_ts = current_data.index[-1]
 
         forecasts = []
         uncertainties = []
-        X_temp = current_data.copy()
+
+        # Work on a copy of the last row as our "template" feature vector
+        base_row = current_data.iloc[[-1]].copy()
 
         for step in range(steps):
-            # Get last row using iloc
-            last_row = X_temp.iloc[[-1]]
-            preds = self.predict_batch(last_row, features)
-            forecast = preds['ensemble'][0]
+            # ── 1. Build feature row from current history buffer ──────────────
+            row = base_row.copy()
+
+            # Advance timestamp by 1 hour per step
+            next_ts = last_ts + pd.Timedelta(hours=step + 1)
+            hour = next_ts.hour
+            dow  = next_ts.dayofweek
+
+            # Update time/calendar features if they exist in the feature set
+            for feat, val in [
+                ('hour',         hour),
+                ('day_of_week',  dow),
+                ('is_weekend',   int(dow >= 5)),
+                ('is_weekday',   int(dow < 5)),
+                ('is_morning',   int(6 <= hour < 12)),
+                ('is_afternoon', int(12 <= hour < 17)),
+                ('is_evening',   int(17 <= hour < 22)),
+                ('is_night',     int(hour >= 22 or hour < 6)),
+                ('is_peak_morning', int(7 <= hour <= 10)),
+                ('is_peak_evening', int(17 <= hour <= 20)),
+                ('hour_sin',     float(np.sin(2 * np.pi * hour / 24))),
+                ('hour_cos',     float(np.cos(2 * np.pi * hour / 24))),
+                ('dow_sin',      float(np.sin(2 * np.pi * dow / 7))),
+                ('dow_cos',      float(np.cos(2 * np.pi * dow / 7))),
+            ]:
+                if feat in row.columns:
+                    row[feat] = val
+
+            # Update lag features from the rolling history buffer
+            LAG_MAP = {
+                'lag_1h': 1, 'lag_2h': 2, 'lag_3h': 3,
+                'lag_6h': 6, 'lag_12h': 12, 'lag_24h': 24,
+                'lag_48h': 48, 'lag_72h': 72, 'lag_168h': 168, 'lag_336h': 336,
+            }
+            for feat, lag in LAG_MAP.items():
+                if feat in row.columns and len(history) >= lag:
+                    row[feat] = history[-lag]
+
+            # Update rolling statistics
+            ROLLING_MAP = {6: 6, 12: 12, 24: 24, 48: 48, 168: 168}
+            for window, w in ROLLING_MAP.items():
+                buf = history[-w:] if len(history) >= w else history
+                if f'roll_mean_{w}h' in row.columns:
+                    row[f'roll_mean_{w}h'] = float(np.mean(buf))
+                if f'roll_std_{w}h' in row.columns:
+                    row[f'roll_std_{w}h'] = float(np.std(buf))
+                if f'roll_min_{w}h' in row.columns:
+                    row[f'roll_min_{w}h'] = float(np.min(buf))
+                if f'roll_max_{w}h' in row.columns:
+                    row[f'roll_max_{w}h'] = float(np.max(buf))
+
+            # Update EWM
+            if 'ewm_24h' in row.columns:
+                alpha = 2 / (24 + 1)
+                ewm_val = history[-1]
+                for v in history[-24:]:
+                    ewm_val = alpha * v + (1 - alpha) * ewm_val
+                row['ewm_24h'] = ewm_val
+            if 'ewm_168h' in row.columns:
+                alpha = 2 / (168 + 1)
+                ewm_val = history[-1]
+                for v in history[-168:] if len(history) >= 168 else history:
+                    ewm_val = alpha * v + (1 - alpha) * ewm_val
+                row['ewm_168h'] = ewm_val
+
+            # ── 2. Predict ────────────────────────────────────────────────────
+            # Only pass features that exist in both row and the model's feature list
+            available = [f for f in features if f in row.columns]
+            preds = self.predict_batch(row, available)
+            forecast = float(preds['ensemble'][0])
+
+            # Clip to realistic range (Australian grid: ~3,000–20,000 MWh)
+            forecast = float(np.clip(forecast, 3000, 20000))
             forecasts.append(forecast)
 
-            uncertainty = self.get_uncertainty({k: v[-1:] for k, v in preds.items()})
-            uncertainties.append(uncertainty[0])
+            # Uncertainty grows with horizon
+            unc = self.get_uncertainty({k: v[-1:] for k, v in preds.items()})
+            base_unc = float(unc[0]) if not np.isnan(unc[0]) else 10.0
+            horizon_unc = base_unc + step * 0.5
+            uncertainties.append(float(np.clip(horizon_unc, 2, 100)))
 
-            # Update X_temp with forecasted value (simple strategy)
-            new_row = X_temp.iloc[-1].copy()
-            new_row['consumption_mwh'] = forecast
-            X_temp = pd.concat([X_temp, pd.DataFrame([new_row])], ignore_index=False)
+            # ── 3. Append to history buffer for next step ─────────────────────
+            history.append(forecast)
 
         return np.array(forecasts), np.array(uncertainties)
+
 
     def explain_prediction(self, X: pd.DataFrame, features: List[str]) -> Dict:
         """Explain individual prediction using SHAP-like approach."""

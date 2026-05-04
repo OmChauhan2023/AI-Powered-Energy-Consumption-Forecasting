@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from src.preprocessing import (
     load_raw, fill_gaps, add_time_features,
-    add_lag_features, add_rolling_features
+    add_lag_features, add_rolling_features, flag_anomalies
 )
 
 
@@ -44,7 +44,10 @@ class DataAgent:
         df = fill_gaps(df)
         self.logger.info(f"Filled gaps: {len(df)} records")
 
-        df = add_time_features(df)
+        df = flag_anomalies(df)         # IQR-based anomaly flags
+        self.logger.info(f"Flagged anomalies: {df['is_anomaly'].sum()} rows")
+
+        df = add_time_features(df)      # incl. is_holiday, is_morning, is_evening, AU seasons
         self.logger.info("Added time features")
 
         df = add_lag_features(df)
@@ -62,18 +65,63 @@ class DataAgent:
         """Add EWM, COVID flags, and interaction features."""
         df = df.copy()
 
-        # Exponential weighted mean
-        df['ewm_12h'] = df['consumption_mwh'].ewm(span=12).mean()
-        df['ewm_24h'] = df['consumption_mwh'].ewm(span=24).mean()
-
-        # COVID flags (2020-2021)
-        df['is_covid'] = ((df.index >= '2020-03-01') & (df.index <= '2021-06-30')).astype(int)
+        # Exponential weighted mean (lag-shifted to avoid leakage)
+        df['ewm_12h'] = df['consumption_mwh'].shift(1).ewm(span=12).mean()
+        df['ewm_24h'] = df['consumption_mwh'].shift(1).ewm(span=24).mean()
 
         # Interaction features
         df['hour_weekend_interaction'] = df['hour'] * df['is_weekend']
-        df['lag_24h_times_hour'] = df['lag_24h'] * df['hour'] if 'lag_24h' in df.columns else 0
+        df['lag_24h_times_hour'] = (
+            df['lag_24h'] * df['hour'] if 'lag_24h' in df.columns else 0
+        )
+        if 'is_covid' in df.columns and 'is_weekend' in df.columns:
+            df['covid_x_weekend'] = df['is_covid'] * df['is_weekend']
+        if 'is_holiday' in df.columns:
+            df['holiday_x_weekend'] = df['is_holiday'] * df['is_weekend']
 
         return df
+
+    # ------------------------------------------------------------------
+    def select_top_features_shap(
+        self,
+        model,                     # fitted XGBoost / LightGBM / CatBoost estimator
+        X_train: pd.DataFrame,
+        feature_cols: list,
+        top_n: int = 30,
+        model_type: str = 'xgb',   # 'xgb' | 'lgb' | 'cat'
+    ) -> list:
+        """
+        Use SHAP to rank features and return the top-N most impactful ones.
+        Falls back to built-in feature importance if SHAP is unavailable.
+        """
+        try:
+            import shap
+            if model_type == 'lgb':
+                explainer = shap.TreeExplainer(model)
+            else:
+                explainer = shap.TreeExplainer(model)
+
+            # Sample for speed (max 5 000 rows)
+            sample = X_train[feature_cols].iloc[:5000]
+            shap_values = explainer.shap_values(sample)
+            mean_abs = np.abs(shap_values).mean(axis=0)
+            importance = pd.Series(mean_abs, index=feature_cols).sort_values(ascending=False)
+            self.logger.info(f"SHAP top-{top_n} features selected")
+        except Exception as e:
+            self.logger.warning(f"SHAP unavailable ({e}); using built-in importance")
+            try:
+                scores = pd.Series(
+                    model.feature_importances_, index=feature_cols
+                ).sort_values(ascending=False)
+            except Exception:
+                scores = pd.Series(
+                    {f: i for i, f in enumerate(reversed(feature_cols))}
+                )
+            importance = scores
+
+        top_features = importance.head(top_n).index.tolist()
+        self.logger.info(f"Selected {len(top_features)} features: {top_features[:5]} ...")
+        return top_features
 
     def split_data(self, df: pd.DataFrame, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
         """Chronological train/val/test split."""
