@@ -1,5 +1,5 @@
 """FastAPI application with energy forecasting endpoints."""
-from fastapi import FastAPI, HTTPException, BackgroundTasks, status
+from fastapi import FastAPI, HTTPException, BackgroundTasks, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -9,13 +9,14 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from agents import PipelineOrchestrator, DataAgent
+from agents import PipelineOrchestrator, DataAgent, WeatherAgent
 from .models import (
     PredictionRequest, PredictionResponse,
     BatchPredictionRequest, BatchPredictionResponse,
     ForecastRequest, ForecastResponse,
     TrainingRequest, TrainingResponse,
-    MetricsResponse, HealthResponse
+    MetricsResponse, HealthResponse,
+    WeatherCurrentResponse, WeatherForecastResponse,
 )
 
 # Global state
@@ -23,6 +24,7 @@ state = {
     'orchestrator': None,
     'last_training': None,
     'training_in_progress': False,
+    'weather_agent': None,
 }
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize orchestrator: {e}")
         raise
+
+    try:
+        state['weather_agent'] = WeatherAgent(default_city="sydney")
+        logger.info("Weather Agent initialized")
+    except Exception as e:
+        logger.warning(f"Weather Agent init failed (non-fatal): {e}")
+        state['weather_agent'] = None
 
     yield
 
@@ -135,14 +144,29 @@ async def predict(request: PredictionRequest):
                     detail="Models not trained yet. Please run /train endpoint first."
                 )
 
+        # Inject live weather features into the request data
+        if state.get('weather_agent'):
+            try:
+                weather_feats = state['weather_agent'].get_weather_features()
+                # Only set weather features if caller didn't already supply them
+                for k, v in weather_feats.items():
+                    request.data.setdefault(k, v)
+                logger.info(f"Weather features injected: {weather_feats}")
+            except Exception as we:
+                logger.warning(f"Weather injection skipped: {we}")
+
         # Simple prediction based on lag features (when models fail)
         lag_24h = float(request.data.get('lag_24h', 125.0))
         lag_12h = float(request.data.get('lag_12h', 125.0))
         roll_mean = float(request.data.get('roll_mean_24h', 125.0))
         hour = float(request.data.get('hour', 12))
 
+        # Weather temperature adjustment: warmer → higher AC load
+        weather_temp = float(request.data.get('weather_temp', 22.0))
+        temp_factor = 1.0 + max(0, (weather_temp - 22.0)) * 0.003
+
         # Base prediction from lag and rolling mean (weighted average)
-        base_pred = (lag_24h * 0.4 + lag_12h * 0.3 + roll_mean * 0.3)
+        base_pred = (lag_24h * 0.4 + lag_12h * 0.3 + roll_mean * 0.3) * temp_factor
 
         # Hour adjustment (energy varies by hour)
         hour_factor = 1.0 + (0.15 * np.sin(2 * np.pi * hour / 24))
@@ -539,6 +563,56 @@ async def general_exception_handler(request, exc):
             "timestamp": datetime.now().isoformat()
         }
     )
+
+
+# ============================================================================
+# Weather Endpoints
+# ============================================================================
+
+@app.get("/weather/current", response_model=WeatherCurrentResponse)
+async def weather_current(
+    city: str = Query(default="sydney", description="Australian city key: sydney, melbourne, brisbane, adelaide, perth")
+):
+    """Get current weather conditions for an Australian city."""
+    agent: WeatherAgent = state.get('weather_agent')
+    if not agent:
+        raise HTTPException(status_code=503, detail="Weather agent not available")
+    try:
+        data = agent.get_current_weather(city)
+        return WeatherCurrentResponse(**data)
+    except Exception as e:
+        logger.error(f"Weather current failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/weather/forecast", response_model=WeatherForecastResponse)
+async def weather_forecast(
+    city: str = Query(default="sydney", description="Australian city key"),
+    hours: int = Query(default=72, ge=1, le=168, description="Forecast horizon in hours (1-168)")
+):
+    """Get hourly weather forecast for an Australian city."""
+    agent: WeatherAgent = state.get('weather_agent')
+    if not agent:
+        raise HTTPException(status_code=503, detail="Weather agent not available")
+    try:
+        data = agent.get_weather_forecast(city, hours)
+        return WeatherForecastResponse(**data)
+    except Exception as e:
+        logger.error(f"Weather forecast failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/weather/cities")
+async def weather_all_cities():
+    """Get current weather for all Australian cities."""
+    agent: WeatherAgent = state.get('weather_agent')
+    if not agent:
+        raise HTTPException(status_code=503, detail="Weather agent not available")
+    try:
+        return {"cities": agent.get_all_cities_current(), "timestamp": datetime.now()}
+    except Exception as e:
+        logger.error(f"Weather all-cities failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================

@@ -114,3 +114,50 @@ export interface Scenario {
   icon: string
   features: PredictionFeatures
 }
+
+// ── Weather Types ──────────────────────────────────────────────────────────────
+
+export interface WeatherCurrentResponse {
+  city: string
+  city_key: string
+  temperature: number
+  apparent_temperature: number
+  humidity: number
+  wind_speed: number
+  cloud_cover: number
+  precipitation: number
+  weather_code: number
+  condition: string
+  energy_impact: string
+  latitude: number
+  longitude: number
+  source: string
+  timestamp: string
+  cached: boolean
+}
+
+export interface WeatherHourlyPoint {
+  time: string
+  temperature: number
+  humidity: number
+  wind_speed: number
+  cloud_cover: number
+  precip_prob: number
+  condition: string
+}
+
+export interface WeatherForecastResponse {
+  city: string
+  city_key: string
+  hours: number
+  hourly: WeatherHourlyPoint[]
+  summary: {
+    avg_temp: number
+    max_temp: number
+    min_temp: number
+    avg_humidity: number
+    avg_cloud: number
+  }
+  source: string
+  timestamp: string
+}

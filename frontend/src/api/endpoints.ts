@@ -10,6 +10,8 @@ import type {
   TrainingRequest,
   TrainingResponse,
   TrainingStatusResponse,
+  WeatherCurrentResponse,
+  WeatherForecastResponse,
 } from './types'
 
 export const api = {
@@ -26,4 +28,14 @@ export const api = {
   train: (payload: TrainingRequest) => apiClient.post<TrainingResponse>('/train', payload),
 
   getTrainingStatus: () => apiClient.get<TrainingStatusResponse>('/training_status'),
+
+  // Weather endpoints
+  getWeatherCurrent: (city = 'sydney') =>
+    apiClient.get<WeatherCurrentResponse>(`/weather/current?city=${city}`),
+
+  getWeatherForecast: (city = 'sydney', hours = 72) =>
+    apiClient.get<WeatherForecastResponse>(`/weather/forecast?city=${city}&hours=${hours}`),
+
+  getWeatherAllCities: () =>
+    apiClient.get<{ cities: WeatherCurrentResponse[]; timestamp: string }>('/weather/cities'),
 }

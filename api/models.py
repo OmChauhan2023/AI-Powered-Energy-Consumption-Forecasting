@@ -114,3 +114,55 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     timestamp: datetime
+
+
+# ── Weather Models ─────────────────────────────────────────────────────────────
+
+class WeatherCurrentResponse(BaseModel):
+    """Current weather conditions for an Australian city."""
+    city: str
+    city_key: str
+    temperature: float = Field(..., description="Temperature in °C")
+    apparent_temperature: float = Field(..., description="Feels-like temperature in °C")
+    humidity: float = Field(..., description="Relative humidity (%)")
+    wind_speed: float = Field(..., description="Wind speed (km/h)")
+    cloud_cover: float = Field(..., description="Cloud cover (%)")
+    precipitation: float = Field(..., description="Current precipitation (mm)")
+    weather_code: int
+    condition: str = Field(..., description="Human-readable weather condition")
+    energy_impact: str = Field(..., description="Expected energy demand impact")
+    latitude: float
+    longitude: float
+    source: str
+    timestamp: str
+    cached: bool = False
+
+
+class WeatherHourlyPoint(BaseModel):
+    """Single hourly forecast data point."""
+    time: str
+    temperature: float
+    humidity: float
+    wind_speed: float
+    cloud_cover: float
+    precip_prob: float
+    condition: str
+
+
+class WeatherForecastSummary(BaseModel):
+    avg_temp: float
+    max_temp: float
+    min_temp: float
+    avg_humidity: float
+    avg_cloud: float
+
+
+class WeatherForecastResponse(BaseModel):
+    """Hourly weather forecast for an Australian city."""
+    city: str
+    city_key: str
+    hours: int
+    hourly: List[WeatherHourlyPoint]
+    summary: WeatherForecastSummary
+    source: str
+    timestamp: str

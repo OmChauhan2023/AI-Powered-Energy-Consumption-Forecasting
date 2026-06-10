@@ -4,6 +4,7 @@ import { PageTransition } from '@/components/layout/PageTransition'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { SkeletonCard } from '@/components/ui/SkeletonCard'
+import { WeatherPanel } from '@/components/ui/WeatherPanel'
 import { HistoricalChart } from '@/components/charts/HistoricalChart'
 import { HourlyPatternChart } from '@/components/charts/HourlyPatternChart'
 import { useMetrics } from '@/hooks/useMetrics'
@@ -45,11 +46,9 @@ export default function Dashboard() {
           </GlassCard>
         </div>
 
+        {/* Weather Panel */}
         <div className="col-span-12 xl:col-span-4">
-          <GlassCard className="h-full">
-            <h2 className="text-xl font-bold mb-4">Hourly Pattern</h2>
-            <HourlyPatternChart data={hourlyData} />
-          </GlassCard>
+          <WeatherPanel />
         </div>
 
         <div className="col-span-12">
