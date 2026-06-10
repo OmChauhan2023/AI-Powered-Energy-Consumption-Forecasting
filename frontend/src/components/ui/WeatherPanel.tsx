@@ -82,17 +82,20 @@ export function WeatherPanel() {
             value={city}
             onChange={e => setCity(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.5)',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '0.5rem',
               padding: '0.25rem 0.5rem',
               fontSize: '0.8rem',
-              color: 'inherit',
+              color: '#0f172a',
               cursor: 'pointer',
+              outline: 'none',
             }}
           >
             {CITIES.map(c => (
-              <option key={c.key} value={c.key} style={{ background: '#1e293b' }}>{c.label}</option>
+              <option key={c.key} value={c.key} style={{ color: '#0f172a', background: '#ffffff' }}>
+                {c.label}
+              </option>
             ))}
           </select>
           {/* Refresh button */}
