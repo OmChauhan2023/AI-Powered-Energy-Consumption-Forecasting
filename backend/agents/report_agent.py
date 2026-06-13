@@ -35,10 +35,24 @@ class ReportAgent:
         pdf.cell(0, 10, "Detailed Forecast & Analysis Report", ln=True, align="C")
         pdf.ln(5)
         
+        # Extract metrics
+        pred_val = data.get('prediction', 0)
+        uncertainty = data.get('uncertainty', 0)
+        financial_cost = pred_val * 134 # Synced with $134/MWh market rate
+        
+        if pred_val < 120:
+            status = "OPTIMAL"
+        elif pred_val <= 135:
+            status = "ELEVATED"
+        else:
+            status = "CRITICAL"
+
         # Subheader
         pdf.set_font("Helvetica", size=12)
-        pdf.cell(0, 10, f"Predicted Load: {data.get('prediction', 'N/A')} MWh", ln=True)
-        pdf.cell(0, 10, f"Uncertainty: ±{data.get('uncertainty', 'N/A')} MWh", ln=True)
+        pdf.cell(0, 10, f"Predicted Load: {pred_val:.1f} MWh", ln=True)
+        pdf.cell(0, 10, f"Uncertainty: ±{uncertainty:.1f} MWh", ln=True)
+        pdf.cell(0, 10, f"Financial Exposure: ${financial_cost:,.0f} (at $134/MWh)", ln=True)
+        pdf.cell(0, 10, f"Grid Strain Status: {status}", ln=True)
         pdf.ln(5)
 
         # AI Reasoning

@@ -30,20 +30,28 @@ class InferenceAgent:
     def load_models(self, suffix=''):
         """Load pre-trained models and weights."""
         try:
-            # Try trained models first, then fall back to optuna models
+            # Try trained models first, then fall back to ensemble or optuna models
             xgb_path = self.model_dir / f"trained_xgb{suffix}.pkl"
+            if not xgb_path.exists():
+                xgb_path = self.model_dir / f"ensemble_xgb{suffix}.pkl"
             if not xgb_path.exists():
                 xgb_path = self.model_dir / f"optuna_xgb{suffix}.pkl"
 
             lgb_path = self.model_dir / f"trained_lgb{suffix}.pkl"
             if not lgb_path.exists():
+                lgb_path = self.model_dir / f"ensemble_lgb{suffix}.pkl"
+            if not lgb_path.exists():
                 lgb_path = self.model_dir / f"optuna_lgb{suffix}.pkl"
 
             cat_path = self.model_dir / f"trained_cat{suffix}.pkl"
             if not cat_path.exists():
+                cat_path = self.model_dir / f"ensemble_cat{suffix}.pkl"
+            if not cat_path.exists():
                 cat_path = self.model_dir / f"optuna_cat{suffix}.pkl"
 
             weights_path = self.model_dir / f"ensemble_weights{suffix}.npy"
+            if not weights_path.exists():
+                weights_path = self.model_dir / f"ensemble_meta{suffix}.pkl"
             if not weights_path.exists():
                 weights_path = self.model_dir / f"optuna_ensemble_meta{suffix}.pkl"
 

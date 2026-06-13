@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import * as Icons from 'lucide-react'
 import { PageTransition } from '@/components/layout/PageTransition'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -6,14 +6,13 @@ import { MetricCard } from '@/components/ui/MetricCard'
 import { SkeletonCard } from '@/components/ui/SkeletonCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { WeatherPanel } from '@/components/ui/WeatherPanel'
-import { useCost } from '@/contexts/CostContext'
 import { HistoricalChart } from '@/components/charts/HistoricalChart'
 import { useMetrics } from '@/hooks/useMetrics'
 import { generateMockHistory } from '@/lib/utils'
 
 export default function PlatformAnalytics() {
   const { data: metrics, isLoading: metricsLoading } = useMetrics()
-  const { isCostMode, rate } = useCost()
+  const [activeTab, setActiveTab] = useState<'monitoring' | 'training'>('monitoring')
   const historyData = useMemo(() => generateMockHistory(168), [])
 
   const currentMWh = historyData.length > 0 ? historyData[historyData.length - 1].value : 0
@@ -28,16 +27,16 @@ export default function PlatformAnalytics() {
             SECTION 1: THE ENGINE (DASHBOARD)
             ========================================================= */}
         <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-          <MetricCard label="Current Load" value={isCostMode ? currentMWh * rate : currentMWh} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.Zap} />
+          <MetricCard label="Current Load" value={currentMWh.toFixed(2)} unit="MWh" icon={Icons.Zap} />
         </div>
         <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-          <MetricCard label="24h Average" value={isCostMode ? avg24h * rate : avg24h} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.BarChart2} />
+          <MetricCard label="24h Average" value={avg24h.toFixed(2)} unit="MWh" icon={Icons.BarChart2} />
         </div>
         <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-          <MetricCard label="Peak (24h)" value={isCostMode ? peak24h * rate : peak24h} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.TrendingUp} />
+          <MetricCard label="Peak (24h)" value={peak24h.toFixed(2)} unit="MWh" icon={Icons.TrendingUp} />
         </div>
         <div className="col-span-12 sm:col-span-6 xl:col-span-3">
-          <MetricCard label="Min (24h)" value={isCostMode ? min24h * rate : min24h} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.TrendingDown} />
+          <MetricCard label="Min (24h)" value={min24h.toFixed(2)} unit="MWh" icon={Icons.TrendingDown} />
         </div>
 
         <div className="col-span-12 xl:col-span-8">
@@ -61,27 +60,11 @@ export default function PlatformAnalytics() {
             <h2 className="text-xl font-bold mb-6">Real-Time Model Performance</h2>
             {metricsLoading ? <SkeletonCard count={1} /> : metrics ? (
               <div className="overflow-x-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 content-start mb-8">
-                  <StatCard
-                    label="Avg Daily Demand"
-                    value={isCostMode ? `$${(2450.5 * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : "2,450.5"}
-                    unit={isCostMode ? "" : "MWh"}
-                  />
-                  <StatCard
-                    label="Peak Load Forecast"
-                    value={isCostMode ? `$${(3100.0 * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : "3,100.0"}
-                    unit={isCostMode ? "" : "MWh"}
-                  />
-                  <StatCard
-                    label="Ensemble Error (MAE)"
-                    value={metrics?.performance?.avg_mae?.toFixed(1) || '--'}
-                    unit="MWh"
-                  />
-                  <StatCard
-                    label="System Health"
-                    value="100"
-                    unit="%"
-                  />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <StatCard label="Live Mean Absolute Error" value={metrics?.performance.avg_mae.toFixed(2) || '--'} unit="MWh" />
+                  <StatCard label="Root Mean Square Error" value={metrics?.performance.avg_rmse.toFixed(2) || '--'} unit="MWh" />
+                  <StatCard label="Mean Abs. Percent Error" value={metrics?.performance.avg_mape.toFixed(2) || '--'} unit="%" />
+                  <StatCard label="Ensemble Evaluations" value={metrics?.performance.n_evaluations || '--'} />
                 </div>
                 <table className="w-full text-sm">
                   <thead className="border-b border-border">

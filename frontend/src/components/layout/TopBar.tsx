@@ -3,7 +3,6 @@ import * as Icons from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/endpoints'
 import { cn } from '@/lib/utils'
-import { useCost } from '@/contexts/CostContext'
 import { NAV_ITEMS } from '@/lib/constants'
 
 export function TopBar() {
@@ -13,8 +12,6 @@ export function TopBar() {
     queryFn: () => api.getHealth().then(res => res.data),
     refetchInterval: 30000,
   })
-
-  const { isCostMode, toggleCostMode } = useCost()
 
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -61,14 +58,6 @@ export function TopBar() {
         {/* Right Actions */}
         <div className="flex items-center gap-4">
           
-          <button
-            onClick={toggleCostMode}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all text-xs font-bold text-gray-700"
-          >
-            {isCostMode ? <Icons.DollarSign className="w-4 h-4 text-emerald-600" /> : <Icons.Zap className="w-4 h-4 text-blue-600" />}
-            {isCostMode ? 'Currency (AUD)' : 'Energy (MWh)'}
-          </button>
-
           <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-gray-50/50">
             <div
               className={cn(

@@ -16,7 +16,7 @@ export function ScenarioButton({ label, icon, isActive, onClick }: ScenarioButto
     <motion.button
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center gap-2 px-4 py-3 rounded-btn border transition-all duration-200',
+        'flex flex-row items-center justify-center gap-1.5 px-3 py-2 rounded-btn border transition-all duration-200',
         isActive
           ? 'bg-gradient-brand text-white border-brand-from shadow-btn'
           : 'border-border text-text-muted hover:border-brand-from hover:text-text-primary'
@@ -25,7 +25,7 @@ export function ScenarioButton({ label, icon, isActive, onClick }: ScenarioButto
       whileTap={{ scale: 0.98 }}
     >
       <Icon className="w-5 h-5" />
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
     </motion.button>
   )
 }

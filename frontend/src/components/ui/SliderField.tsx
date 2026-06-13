@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 
 interface SliderFieldProps {
   label: string
+  description?: string
   min: number
   max: number
   step?: number
@@ -10,15 +11,20 @@ interface SliderFieldProps {
   formatLabel?: (value: number) => string
 }
 
-export function SliderField({ label, min, max, step = 1, value, onChange, formatLabel }: SliderFieldProps) {
+export function SliderField({ label, description, min, max, step = 1, value, onChange, formatLabel }: SliderFieldProps) {
   const displayValue = formatLabel ? formatLabel(value) : value
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-semibold text-text-secondary">{label}</label>
-        <span className="text-xs text-text-muted">{displayValue}</span>
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-base font-extrabold text-gray-900">{label}</label>
+        <span className="text-sm font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{displayValue}</span>
       </div>
+      {description && (
+        <p className="text-sm leading-relaxed text-gray-500 font-medium mb-3">
+          {description}
+        </p>
+      )}
       <input
         type="range"
         min={min}

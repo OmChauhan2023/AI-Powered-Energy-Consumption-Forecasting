@@ -11,11 +11,9 @@ import { SliderField } from '@/components/ui/SliderField'
 import { ForecastChart } from '@/components/charts/ForecastChart'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { WeatherPanel } from '@/components/ui/WeatherPanel'
-import { useCost } from '@/contexts/CostContext'
 import { api } from '@/api/endpoints'
 
 export default function Forecaster() {
-  const { isCostMode, rate } = useCost()
   
   // --- FORECAST STATE ---
   const [horizon, setHorizon] = useState(24)
@@ -176,10 +174,10 @@ export default function Forecaster() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6 mb-8 mt-2">
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-start">
-              <StatCard label="Peak Forecast" value={forecastStats ? (isCostMode ? `$${(forecastStats.max * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.max.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-              <StatCard label="Minimum Forecast" value={forecastStats ? (isCostMode ? `$${(forecastStats.min * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.min.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-              <StatCard label="Average Demand" value={forecastStats ? (isCostMode ? `$${(forecastStats.mean * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.mean.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-              <StatCard label="Std Deviation" value={forecastStats ? (isCostMode ? `$${(forecastStats.std * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.std.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+              <StatCard label="Peak Forecast" value={forecastStats ? forecastStats.max.toFixed(1) : '--'} unit="MWh" />
+              <StatCard label="Minimum Forecast" value={forecastStats ? forecastStats.min.toFixed(1) : '--'} unit="MWh" />
+              <StatCard label="Average Demand" value={forecastStats ? forecastStats.mean.toFixed(1) : '--'} unit="MWh" />
+              <StatCard label="Std Deviation" value={forecastStats ? forecastStats.std.toFixed(1) : '--'} unit="MWh" />
             </div>
 
             <GlassCard className="border-2 border-black">
