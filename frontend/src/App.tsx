@@ -4,10 +4,9 @@ import { AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 
-import Dashboard from '@/pages/Dashboard'
-import Overview from '@/pages/Overview'
-import Predictions from '@/pages/Predictions'
-import Forecast from '@/pages/Forecast'
+import { Navigate } from 'react-router-dom'
+import PredictionEngine from '@/pages/PredictionEngine'
+import PlatformAnalytics from '@/pages/PlatformAnalytics'
 import Monitoring from '@/pages/Monitoring'
 import Training from '@/pages/Training'
 import Settings from '@/pages/Settings'
@@ -25,13 +24,12 @@ export default function App() {
         <main className="flex-1 overflow-auto p-6">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Overview />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/predictions" element={<Predictions />} />
-              <Route path="/forecast" element={<Forecast />} />
+              <Route path="/" element={<PredictionEngine />} />
+              <Route path="/analytics" element={<PlatformAnalytics />} />
               <Route path="/monitoring" element={<Monitoring />} />
               <Route path="/training" element={<Training />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AnimatePresence>
         </main>

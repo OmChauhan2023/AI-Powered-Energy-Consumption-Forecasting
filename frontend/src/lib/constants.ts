@@ -1,11 +1,9 @@
 import type { Scenario } from '@/api/types'
 
 export const NAV_ITEMS = [
-  { path: '/', label: 'Overview', icon: 'BookOpen' },
-  { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { path: '/predictions', label: 'Predictions', icon: 'Target' },
-  { path: '/forecast', label: 'Forecast', icon: 'TrendingUp' },
-  { path: '/monitoring', label: 'Monitoring', icon: 'Activity' },
+  { path: '/', label: 'Prediction Engine', icon: 'Target' },
+  { path: '/analytics', label: 'Platform Analytics', icon: 'Activity' },
+  { path: '/monitoring', label: 'Monitoring', icon: 'Radio' },
   { path: '/training', label: 'Training', icon: 'Brain' },
   { path: '/settings', label: 'Settings', icon: 'Settings' },
 ] as const
