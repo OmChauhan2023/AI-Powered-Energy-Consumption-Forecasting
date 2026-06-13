@@ -6,6 +6,11 @@ from contextlib import asynccontextmanager
 import logging
 from datetime import datetime
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 import pandas as pd
 import numpy as np
 
