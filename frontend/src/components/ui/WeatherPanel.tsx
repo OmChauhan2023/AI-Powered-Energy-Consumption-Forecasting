@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Cloud, Droplets, Wind, Thermometer, Sun, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Cloud, Droplets, Wind, Thermometer, Sun, AlertTriangle, RefreshCw, MapPin } from 'lucide-react'
 import { api } from '@/api/endpoints'
 import type { WeatherCurrentResponse } from '@/api/types'
+import { cn } from '@/lib/utils'
 
 const CITIES = [
   { key: 'sydney',    label: 'Sydney' },
@@ -13,11 +14,11 @@ const CITIES = [
 
 function WeatherIcon({ code, className }: { code: number; className?: string }) {
   const cls = className ?? 'w-8 h-8'
-  if (code === 0 || code === 1) return <Sun className={cls} style={{ color: '#fbbf24' }} />
-  if (code <= 3)                return <Cloud className={cls} style={{ color: '#94a3b8' }} />
-  if (code <= 55)               return <Droplets className={cls} style={{ color: '#60a5fa' }} />
-  if (code <= 65)               return <Droplets className={cls} style={{ color: '#3b82f6' }} />
-  return <AlertTriangle className={cls} style={{ color: '#f97316' }} />
+  if (code === 0 || code === 1) return <Sun className={cn(cls, "text-yellow-500")} />
+  if (code <= 3)                return <Cloud className={cn(cls, "text-slate-400")} />
+  if (code <= 55)               return <Droplets className={cn(cls, "text-blue-400")} />
+  if (code <= 65)               return <Droplets className={cn(cls, "text-blue-600")} />
+  return <AlertTriangle className={cn(cls, "text-orange-500")} />
 }
 
 export function WeatherPanel() {
@@ -25,7 +26,6 @@ export function WeatherPanel() {
   const [weather, setWeather] = useState<WeatherCurrentResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const fetchWeather = async (selectedCity: string) => {
     setLoading(true)
@@ -33,7 +33,6 @@ export function WeatherPanel() {
     try {
       const data = await api.getWeatherCurrent(selectedCity)
       setWeather(data)
-      setLastUpdated(new Date())
     } catch {
       setError('Could not reach weather service')
     } finally {
@@ -43,158 +42,100 @@ export function WeatherPanel() {
 
   useEffect(() => {
     fetchWeather(city)
-    // Auto-refresh every 10 minutes
     const interval = setInterval(() => fetchWeather(city), 10 * 60 * 1000)
     return () => clearInterval(interval)
   }, [city])
 
-  const impactColor = (impact: string) => {
-    if (impact.startsWith('🔴')) return '#ef4444'
-    if (impact.startsWith('🟠')) return '#f97316'
-    if (impact.startsWith('🟡')) return '#eab308'
-    return '#22c55e'
+  const getImpactStyles = (impact: string) => {
+    if (impact.startsWith('🔴')) return 'bg-red-50 text-red-700 border-red-200'
+    if (impact.startsWith('🟠')) return 'bg-orange-50 text-orange-700 border-orange-200'
+    if (impact.startsWith('🟡')) return 'bg-yellow-50 text-yellow-700 border-yellow-200'
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200'
   }
 
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(14,165,233,0.12) 0%, rgba(99,102,241,0.10) 100%)',
-      border: '1px solid rgba(99,102,241,0.25)',
-      borderRadius: '1rem',
-      padding: '1.5rem',
-      backdropFilter: 'blur(12px)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Decorative blob */}
-      <div style={{
-        position: 'absolute', top: '-40px', right: '-40px',
-        width: '120px', height: '120px',
-        background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
-        borderRadius: '50%', pointerEvents: 'none',
-      }} />
+  if (loading && !weather) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-gray-400">
+        <RefreshCw className="w-8 h-8 animate-spin mb-4" />
+        <span className="text-sm font-semibold">Connecting to BOM Weather...</span>
+      </div>
+    )
+  }
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <h2 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>🌤️ Live Weather</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {/* City selector */}
-          <select
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '0.5rem',
-              padding: '0.25rem 0.5rem',
-              fontSize: '0.8rem',
-              color: '#0f172a',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            {CITIES.map(c => (
-              <option key={c.key} value={c.key} style={{ color: '#0f172a', background: '#ffffff' }}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          {/* Refresh button */}
-          <button
-            onClick={() => fetchWeather(city)}
-            title="Refresh weather"
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '0.5rem',
-              padding: '0.3rem',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'inherit',
-            }}
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
+  if (error && !weather) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-semibold flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4" />
+        {error}
+      </div>
+    )
+  }
+
+  if (!weather) return null
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* City Selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-gray-500">
+          <MapPin className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">Target Grid</span>
+        </div>
+        <select
+          value={city}
+          onChange={e => setCity(e.target.value)}
+          className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-bold rounded-lg focus:ring-slate-900 focus:border-slate-900 block px-3 py-1.5 outline-none cursor-pointer"
+        >
+          {CITIES.map(c => (
+            <option key={c.key} value={c.key}>{c.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Main Temperature */}
+      <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <WeatherIcon code={weather.weather_code} className="w-12 h-12" />
+        <div>
+          <div className="text-3xl font-extrabold text-gray-900 leading-none mb-1">
+            {weather.temperature}°C
+          </div>
+          <div className="text-sm font-semibold text-gray-500">
+            Feels like {weather.apparent_temperature}°C · {weather.condition}
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      {loading && !weather && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ opacity: 0.5 }} />
+      {/* Grid of secondary metrics */}
+      <div className="grid grid-cols-2 gap-3">
+        <WeatherStat icon={<Droplets className="w-4 h-4" />} label="Humidity" value={`${weather.humidity}%`} />
+        <WeatherStat icon={<Wind className="w-4 h-4" />} label="Wind" value={`${weather.wind_speed} km/h`} />
+        <WeatherStat icon={<Cloud className="w-4 h-4" />} label="Cloud Cover" value={`${weather.cloud_cover}%`} />
+        <WeatherStat icon={<Thermometer className="w-4 h-4" />} label="Precip" value={`${weather.precipitation} mm`} />
+      </div>
+
+      {/* Critical Impact Banner */}
+      <div className={cn("mt-2 rounded-xl p-4 border", getImpactStyles(weather.energy_impact))}>
+        <div className="text-xs font-extrabold uppercase tracking-wider mb-1 opacity-80 flex items-center justify-between">
+          <span>ML Feature Impact</span>
+          <span className="text-xl leading-none">{weather.energy_impact.match(/^[🔴🟠🟡🟢]/)?.[0] || '⚡'}</span>
         </div>
-      )}
-
-      {error && !weather && (
-        <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>
-          ⚠️ {error}
+        <div className="text-sm font-semibold leading-relaxed">
+          {weather.energy_impact.replace(/^[🔴🟠🟡🟢]\s*/, '')}
         </div>
-      )}
-
-      {weather && (
-        <>
-          {/* Main temperature + icon */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-            <WeatherIcon code={weather.weather_code} className="w-12 h-12" />
-            <div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>
-                {weather.temperature}°C
-              </div>
-              <div style={{ fontSize: '0.8rem', opacity: 0.65, marginTop: '0.15rem' }}>
-                Feels like {weather.apparent_temperature}°C · {weather.condition}
-              </div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '0.1rem' }}>
-                {weather.city}
-              </div>
-            </div>
-          </div>
-
-          {/* Metrics grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-            <WeatherStat icon={<Droplets size={14} />} label="Humidity" value={`${weather.humidity}%`} />
-            <WeatherStat icon={<Wind size={14} />} label="Wind" value={`${weather.wind_speed} km/h`} />
-            <WeatherStat icon={<Cloud size={14} />} label="Cloud Cover" value={`${weather.cloud_cover}%`} />
-            <WeatherStat icon={<Thermometer size={14} />} label="Precipitation" value={`${weather.precipitation} mm`} />
-          </div>
-
-          {/* Energy impact */}
-          <div style={{
-            background: `${impactColor(weather.energy_impact)}18`,
-            border: `1px solid ${impactColor(weather.energy_impact)}40`,
-            borderRadius: '0.6rem',
-            padding: '0.6rem 0.8rem',
-            fontSize: '0.78rem',
-            lineHeight: 1.4,
-          }}>
-            <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.1rem', opacity: 0.7 }}>
-              ENERGY DEMAND IMPACT
-            </span>
-            {weather.energy_impact}
-          </div>
-
-          {/* Footer */}
-          <div style={{ fontSize: '0.68rem', opacity: 0.35, marginTop: '0.75rem', textAlign: 'right' }}>
-            {weather.source} · {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : ''}
-          </div>
-        </>
-      )}
+      </div>
     </div>
   )
 }
 
 function WeatherStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.04)',
-      borderRadius: '0.5rem',
-      padding: '0.5rem 0.65rem',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.4rem',
-    }}>
-      <span style={{ opacity: 0.5 }}>{icon}</span>
+    <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+      <div className="text-gray-500">
+        {icon}
+      </div>
       <div>
-        <div style={{ fontSize: '0.65rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{value}</div>
+        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">{label}</div>
+        <div className="text-sm font-extrabold text-gray-900">{value}</div>
       </div>
     </div>
   )

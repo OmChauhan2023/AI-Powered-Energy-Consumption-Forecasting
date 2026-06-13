@@ -4,13 +4,14 @@ import { CHART_COLORS, CHART_DEFAULTS } from '@/lib/constants'
 interface ForecastChartProps {
   forecasts: number[]
   uncertainties: number[]
+  labels?: string[]
   startHour?: number
 }
 
-export function ForecastChart({ forecasts, uncertainties, startHour = new Date().getHours() }: ForecastChartProps) {
+export function ForecastChart({ forecasts, uncertainties, labels, startHour = new Date().getHours() }: ForecastChartProps) {
   const data = forecasts.map((forecast, i) => {
     const hour = (startHour + i) % 24
-    const label = `${String(hour).padStart(2, '0')}:00`
+    const label = labels ? labels[i] : `${String(hour).padStart(2, '0')}:00`
     return {
       hour: i,
       label,
@@ -42,10 +43,10 @@ export function ForecastChart({ forecasts, uncertainties, startHour = new Date()
         <Tooltip
           {...CHART_DEFAULTS.tooltip}
           formatter={(value: any, name: string) => {
-            const labels: Record<string, string> = { forecast: 'Forecast', upper: 'Upper bound', lower: 'Lower bound' }
-            return [`${Number(value).toFixed(1)} MWh`, labels[name] ?? name]
+            const labelsMap: Record<string, string> = { forecast: 'Forecast', upper: 'Upper bound', lower: 'Lower bound' }
+            return [`${Number(value).toFixed(1)} MWh`, labelsMap[name] ?? name]
           }}
-          labelFormatter={(label) => `🕐 ${label}`}
+          labelFormatter={(label) => `📅 ${label}`}
         />
         <Legend
           formatter={(value) => value === 'upper' ? 'Uncertainty band' : value === 'forecast' ? 'Ensemble forecast' : null}
