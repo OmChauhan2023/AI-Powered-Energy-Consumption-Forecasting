@@ -19,7 +19,7 @@ export function TopBar() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white shadow-md">
             <Icons.Zap className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight hidden sm:block">AI Forecaster</span>
+          <span className="text-lg font-bold tracking-tight hidden sm:block">Eagle AI Energy Forecaster</span>
         </div>
 
         {/* Navigation Links */}

@@ -4,7 +4,8 @@ import { AnimatePresence } from 'framer-motion'
 import { TopBar } from '@/components/layout/TopBar'
 
 import { Navigate } from 'react-router-dom'
-import PredictionEngine from '@/pages/PredictionEngine'
+import PredictorPortal from '@/pages/PredictorPortal'
+import Forecaster from '@/pages/Forecaster'
 import PlatformAnalytics from '@/pages/PlatformAnalytics'
 import Monitoring from '@/pages/Monitoring'
 import Training from '@/pages/Training'
@@ -21,7 +22,8 @@ export default function App() {
         <main className="flex-1 overflow-auto p-6">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<PredictionEngine />} />
+              <Route path="/" element={<PredictorPortal />} />
+              <Route path="/forecast" element={<Forecaster />} />
               <Route path="/analytics" element={<PlatformAnalytics />} />
               <Route path="/monitoring" element={<Monitoring />} />
               <Route path="/training" element={<Training />} />

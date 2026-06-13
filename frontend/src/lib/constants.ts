@@ -1,7 +1,8 @@
 import type { Scenario } from '@/api/types'
 
 export const NAV_ITEMS = [
-  { path: '/', label: 'Prediction Engine', icon: 'Target' },
+  { path: '/', label: 'Predictor Portal', icon: 'Target' },
+  { path: '/forecast', label: 'Forecaster', icon: 'LineChart' },
   { path: '/analytics', label: 'Platform Analytics', icon: 'Activity' },
   { path: '/monitoring', label: 'Monitoring', icon: 'Radio' },
   { path: '/training', label: 'Training', icon: 'Brain' },

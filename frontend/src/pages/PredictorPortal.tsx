@@ -6,43 +6,21 @@ import { motion } from 'framer-motion'
 
 import { PageTransition } from '@/components/layout/PageTransition'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { StatCard } from '@/components/ui/StatCard'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { ScenarioButton } from '@/components/ui/ScenarioButton'
 import { SliderField } from '@/components/ui/SliderField'
-import { ForecastChart } from '@/components/charts/ForecastChart'
 import { ModelComparisonChart } from '@/components/charts/ModelComparisonChart'
 import { ChatWidget } from '@/components/ui/ChatWidget'
+import { WeatherPanel } from '@/components/ui/WeatherPanel'
 import { useCost } from '@/contexts/CostContext'
 import { api } from '@/api/endpoints'
 import { SCENARIOS } from '@/lib/constants'
 import { hourLabel, dayLabel, monthLabel, cn } from '@/lib/utils'
 import type { PredictionFeatures, PredictionResponse } from '@/api/types'
 
-export default function PredictionEngine() {
+export default function PredictorPortal() {
   const { isCostMode, rate } = useCost()
   
-  // --- FORECAST STATE ---
-  const [horizon, setHorizon] = useState(24)
-  const [forecastResult, setForecastResult] = useState<any>(null)
-
-  const forecastMutation = useMutation({
-    mutationFn: () => api.forecast({ horizon }),
-    onSuccess: (data) => {
-      setForecastResult(data)
-      toast.success(`${data.horizon}h forecast generated!`)
-    },
-    onError: () => toast.error('Forecast failed — check API connection'),
-  })
-
-  const forecastStats = forecastResult && forecastResult.forecasts.length > 0 ? {
-    max: Math.max(...forecastResult.forecasts),
-    min: Math.min(...forecastResult.forecasts),
-    mean: forecastResult.forecasts.reduce((a: number, b: number) => a + b, 0) / forecastResult.forecasts.length,
-    std: Math.sqrt(forecastResult.forecasts.reduce((a: number, v: number, _i: number, arr: any[]) => 
-      a + Math.pow(v - arr.reduce((x: number, y: number) => x + y) / arr.length, 2), 0) / forecastResult.forecasts.length),
-  } : null
-
   // --- PREDICTIONS STATE ---
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null)
   const [features, setFeatures] = useState<PredictionFeatures>({
@@ -88,69 +66,26 @@ export default function PredictionEngine() {
   return (
     <PageTransition>
       <div className="grid grid-cols-12 gap-6 relative">
-        <ChatWidget context={{ forecastResult, predictionResult, features }} />
+        <ChatWidget context={{ predictionResult, features }} />
         
         {/* =========================================================
-            SECTION 1: FORECAST HORIZON (TOP)
+            HEADER & DESCRIPTION
             ========================================================= */}
-        <div className="col-span-12 xl:col-span-8">
-          <GlassCard className="h-full">
-            <h2 className="text-xl font-bold mb-6">Long-Term Horizon Generator</h2>
-            <SliderField
-              label={`${horizon} Hours Ahead`}
-              min={1} max={168} value={horizon}
-              onChange={setHorizon} formatLabel={(v) => `${v} hours`}
-            />
-            <div className="flex gap-3 mt-6">
-              {[24, 48, 168].map(h => (
-                <motion.button key={h} onClick={() => setHorizon(h)}
-                  className="flex-1 px-4 py-2 rounded-btn bg-black/5 hover:bg-black/10 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                >
-                  {h === 168 ? '7 Days' : `${h} Hours`}
-                </motion.button>
-              ))}
-            </div>
-            <motion.button
-              onClick={() => forecastMutation.mutate()} disabled={forecastMutation.isPending}
-              className="w-full mt-6 px-8 py-3 bg-gradient-brand rounded-btn font-bold text-white shadow-btn hover:shadow-btn-hover transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            >
-              {forecastMutation.isPending ? 'Generating...' : `Generate ${horizon}h Forecast`}
-            </motion.button>
-          </GlassCard>
-        </div>
-
-        <div className="col-span-12 xl:col-span-4 grid grid-cols-2 gap-3 content-start">
-          <StatCard label="Max" value={forecastStats ? (isCostMode ? `$${(forecastStats.max * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.max.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Min" value={forecastStats ? (isCostMode ? `$${(forecastStats.min * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.min.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Mean" value={forecastStats ? (isCostMode ? `$${(forecastStats.mean * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.mean.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Std" value={forecastStats ? (isCostMode ? `$${(forecastStats.std * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.std.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-        </div>
-
-        {forecastResult && (
-          <div className="col-span-12 mb-8">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-              <GlassCard>
-                <h2 className="text-xl font-bold mb-4">Forecast with Uncertainty Band</h2>
-                <ForecastChart forecasts={forecastResult.forecasts} uncertainties={forecastResult.uncertainties} />
-              </GlassCard>
-            </motion.div>
+        <div className="col-span-12">
+          <div className="mb-2">
+            <h1 className="text-3xl font-extrabold tracking-tight">Enterprise Predictor Engine</h1>
+            <p className="text-text-secondary mt-2 max-w-3xl leading-relaxed">
+              Welcome to the Nexus AI Predictor. This tool allows you to isolate specific hours and conditions to see exactly how our ensemble models react. Use the custom configuration to probe specific scenarios, and view the Explainable AI (XAI) breakdown to understand the primary drivers behind energy demand.
+            </p>
           </div>
-        )}
-
-        <div className="col-span-12 border-b border-border my-4" />
+        </div>
 
         {/* =========================================================
-            SECTION 2: SINGLE HOUR SIMULATOR (BOTTOM)
+            SINGLE HOUR SIMULATOR (TOP ROW)
             ========================================================= */}
-        <div className="col-span-12 mb-2">
-          <h2 className="text-2xl font-bold">What-If Scenarios & Feature Probing</h2>
-          <p className="text-text-secondary mt-1">Isolate specific hours and conditions to see exactly how the ensemble reacts.</p>
-        </div>
-
-        <div className="col-span-12 xl:col-span-4">
-          <GlassCard className="h-full">
+        <div className="col-span-12 xl:col-span-4 flex flex-col gap-6">
+          <WeatherPanel />
+          <GlassCard className="flex-1">
             <h2 className="text-xl font-bold mb-4">Quick Scenarios</h2>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(SCENARIOS).map(([key, scenario]) => (
@@ -179,11 +114,14 @@ export default function PredictionEngine() {
               className="mt-8 w-full px-8 py-3 bg-gradient-brand rounded-btn font-bold text-white shadow-btn hover:shadow-btn-hover transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             >
-              {predictMutation.isPending ? 'Predicting...' : 'Run Prediction'}
+              {predictMutation.isPending ? 'Predicting...' : 'Run AI Prediction'}
             </motion.button>
           </GlassCard>
         </div>
 
+        {/* =========================================================
+            RESULTS & EXPLAINABLE AI
+            ========================================================= */}
         {predictionResult && (
           <div className="col-span-12 mt-2">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-12 gap-6">
