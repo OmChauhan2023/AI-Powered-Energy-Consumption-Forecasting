@@ -31,7 +31,7 @@ export function ChatWidget({ context }: { context?: any }) {
     try {
       const res = await api.chat({ message: userMsg, context })
       setHistory(prev => [...prev, { role: 'ai', text: res.response }])
-    } catch (e) {
+    } catch {
       setHistory(prev => [...prev, { role: 'ai', text: 'Sorry, I encountered an error connecting to my brain.' }])
     } finally {
       setIsLoading(false)

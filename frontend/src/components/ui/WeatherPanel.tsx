@@ -34,7 +34,7 @@ export function WeatherPanel() {
       const data = await api.getWeatherCurrent(selectedCity)
       setWeather(data)
       setLastUpdated(new Date())
-    } catch (err) {
+    } catch {
       setError('Could not reach weather service')
     } finally {
       setLoading(false)

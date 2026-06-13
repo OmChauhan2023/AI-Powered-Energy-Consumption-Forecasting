@@ -80,7 +80,7 @@ export default function PredictionEngine() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       toast.success('Report downloaded!', { id: loadingToast })
-    } catch (e) {
+    } catch {
       toast.error('Failed to generate report', { id: loadingToast })
     }
   }
