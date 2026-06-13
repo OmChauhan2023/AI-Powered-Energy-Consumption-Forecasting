@@ -33,6 +33,7 @@ class PredictionResponse(BaseModel):
     xgb_weight: float = Field(..., description="XGBoost weight")
     lgb_weight: float = Field(..., description="LightGBM weight")
     cat_weight: float = Field(..., description="CatBoost weight")
+    feature_contributions: Optional[Dict[str, float]] = Field(default=None, description="XAI feature importance/contribution")
     timestamp: datetime
 
 
@@ -115,6 +116,18 @@ class ErrorResponse(BaseModel):
     detail: Optional[str] = None
     timestamp: datetime
 
+# ── AI Insights & Reporting ───────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    message: str
+    context: Optional[Dict] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    timestamp: datetime
+
+class ReportRequest(BaseModel):
+    data: Dict
 
 # ── Weather Models ─────────────────────────────────────────────────────────────
 

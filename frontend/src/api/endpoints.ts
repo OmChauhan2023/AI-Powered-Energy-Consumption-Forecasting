@@ -12,6 +12,9 @@ import type {
   TrainingStatusResponse,
   WeatherCurrentResponse,
   WeatherForecastResponse,
+  ChatRequest,
+  ChatResponse,
+  ReportRequest
 } from './types'
 
 export const api = {
@@ -29,13 +32,28 @@ export const api = {
 
   getTrainingStatus: () => apiClient.get<TrainingStatusResponse>('/training_status'),
 
-  // Weather endpoints
-  getWeatherCurrent: (city = 'sydney') =>
+  // Weather
+  getWeatherCurrent: (city: string = 'sydney') =>
     apiClient.get<WeatherCurrentResponse>(`/weather/current?city=${city}`),
 
-  getWeatherForecast: (city = 'sydney', hours = 72) =>
+  getWeatherForecast: (city: string = 'sydney', hours: number = 72) =>
     apiClient.get<WeatherForecastResponse>(`/weather/forecast?city=${city}&hours=${hours}`),
 
   getWeatherAllCities: () =>
-    apiClient.get<{ cities: WeatherCurrentResponse[]; timestamp: string }>('/weather/cities'),
+    apiClient.get<{ cities: Record<string, WeatherCurrentResponse>; timestamp: string }>('/weather/cities'),
+
+  // AI & Reporting
+  chat: (data: ChatRequest) =>
+    apiClient.post<ChatResponse>('/chat', data),
+
+  generateReport: async (data: ReportRequest) => {
+    // Requires a custom fetch to handle Blob downloading for PDF
+    const response = await fetch('http://localhost:8000/generate-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to generate report');
+    return response.blob();
+  }
 }

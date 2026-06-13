@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from agents import PipelineOrchestrator, DataAgent, WeatherAgent
+from agents import PipelineOrchestrator, DataAgent, WeatherAgent, ChatAgent, ReportAgent
 from .models import (
     PredictionRequest, PredictionResponse,
     BatchPredictionRequest, BatchPredictionResponse,
@@ -17,6 +17,7 @@ from .models import (
     TrainingRequest, TrainingResponse,
     MetricsResponse, HealthResponse,
     WeatherCurrentResponse, WeatherForecastResponse,
+    ChatRequest, ChatResponse, ReportRequest
 )
 
 # Global state
@@ -25,6 +26,8 @@ state = {
     'last_training': None,
     'training_in_progress': False,
     'weather_agent': None,
+    'chat_agent': None,
+    'report_agent': None,
 }
 
 logger = logging.getLogger(__name__)
@@ -48,6 +51,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Weather Agent init failed (non-fatal): {e}")
         state['weather_agent'] = None
+
+    try:
+        import os
+        api_key = os.environ.get("GEMINI_API_KEY")
+        state['chat_agent'] = ChatAgent(api_key=api_key)
+        state['report_agent'] = ReportAgent(api_key=api_key)
+        logger.info("AI Agents initialized")
+    except Exception as e:
+        logger.warning(f"AI Agents init failed: {e}")
 
     yield
 
@@ -189,6 +201,18 @@ async def predict(request: PredictionRequest):
         model_std = np.std([xgb_val, lgb_val, cat_val])
         uncertainty = max(0.5, min(15.0, model_std))
 
+        # Calculate dummy feature contributions (XAI)
+        avg_load = 125.0
+        feature_contributions = {
+            "lag_24h": (lag_24h - avg_load) * 0.4,
+            "lag_12h": (lag_12h - avg_load) * 0.3,
+            "weather_temp": (temp_factor - 1.0) * avg_load,
+            "time_of_day": (hour_factor - 1.0) * avg_load
+        }
+        
+        # Sort by absolute impact
+        feature_contributions = dict(sorted(feature_contributions.items(), key=lambda item: abs(item[1]), reverse=True))
+
         return PredictionResponse(
             prediction=pred_val,
             uncertainty=uncertainty,
@@ -198,6 +222,7 @@ async def predict(request: PredictionRequest):
             xgb_weight=0.05,
             lgb_weight=0.30,
             cat_weight=0.65,
+            feature_contributions=feature_contributions,
             timestamp=datetime.now()
         )
 
@@ -612,6 +637,48 @@ async def weather_all_cities():
         return {"cities": agent.get_all_cities_current(), "timestamp": datetime.now()}
     except Exception as e:
         logger.error(f"Weather all-cities failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# AI Insights & Reporting
+# ============================================================================
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    """Chat with Gemini AI."""
+    agent: ChatAgent = state.get('chat_agent')
+    if not agent or not agent.client:
+        return ChatResponse(response="Gemini ChatAgent is not configured. Missing API key.", timestamp=datetime.now())
+    
+    try:
+        reply = agent.ask(request.message, request.context)
+        return ChatResponse(response=reply, timestamp=datetime.now())
+    except Exception as e:
+        logger.error(f"Chat failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-report")
+async def generate_report(request: ReportRequest):
+    """Generate a detailed PDF report using Gemini reasoning and FPDF."""
+    agent: ReportAgent = state.get('report_agent')
+    if not agent or not agent.client:
+        raise HTTPException(status_code=503, detail="ReportAgent is not configured. Missing API key.")
+    
+    try:
+        import os
+        from fastapi.responses import FileResponse
+        
+        # Ensure outputs folder exists
+        os.makedirs("outputs/reports", exist_ok=True)
+        out_path = f"outputs/reports/report_{int(datetime.now().timestamp())}.pdf"
+        
+        agent.generate_pdf_report(request.data, out_path)
+        
+        return FileResponse(out_path, filename="Energy_Forecast_Report.pdf", media_type="application/pdf")
+    except Exception as e:
+        logger.error(f"Report generation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

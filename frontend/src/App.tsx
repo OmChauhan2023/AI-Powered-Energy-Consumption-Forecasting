@@ -1,7 +1,6 @@
 import { useLocation } from 'react-router-dom'
 import { Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 
 import { Navigate } from 'react-router-dom'
@@ -16,9 +15,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-gradient-surface text-text-primary font-sans">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col ml-60 transition-all duration-300">
+      <div className="flex-1 flex flex-col transition-all duration-300">
         <TopBar />
 
         <main className="flex-1 overflow-auto p-6">

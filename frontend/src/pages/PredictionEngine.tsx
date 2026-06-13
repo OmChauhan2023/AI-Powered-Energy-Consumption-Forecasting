@@ -12,12 +12,16 @@ import { ScenarioButton } from '@/components/ui/ScenarioButton'
 import { SliderField } from '@/components/ui/SliderField'
 import { ForecastChart } from '@/components/charts/ForecastChart'
 import { ModelComparisonChart } from '@/components/charts/ModelComparisonChart'
+import { ChatWidget } from '@/components/ui/ChatWidget'
+import { useCost } from '@/contexts/CostContext'
 import { api } from '@/api/endpoints'
 import { SCENARIOS } from '@/lib/constants'
-import { hourLabel, dayLabel, monthLabel } from '@/lib/utils'
+import { hourLabel, dayLabel, monthLabel, cn } from '@/lib/utils'
 import type { PredictionFeatures, PredictionResponse } from '@/api/types'
 
 export default function PredictionEngine() {
+  const { isCostMode, rate } = useCost()
+  
   // --- FORECAST STATE ---
   const [horizon, setHorizon] = useState(24)
   const [forecastResult, setForecastResult] = useState<any>(null)
@@ -62,9 +66,29 @@ export default function PredictionEngine() {
     setFeatures(SCENARIOS[key].features)
   }
 
+  const handleDownloadReport = async () => {
+    if (!predictionResult) return
+    const loadingToast = toast.loading('Generating AI Report...')
+    try {
+      const blob = await api.generateReport({ data: { ...predictionResult, features } })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Energy_Forecast_Report_${Date.now()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Report downloaded!', { id: loadingToast })
+    } catch (e) {
+      toast.error('Failed to generate report', { id: loadingToast })
+    }
+  }
+
   return (
     <PageTransition>
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-6 relative">
+        <ChatWidget context={{ forecastResult, predictionResult, features }} />
         
         {/* =========================================================
             SECTION 1: FORECAST HORIZON (TOP)
@@ -98,10 +122,10 @@ export default function PredictionEngine() {
         </div>
 
         <div className="col-span-12 xl:col-span-4 grid grid-cols-2 gap-3 content-start">
-          <StatCard label="Max" value={forecastStats?.max.toFixed(1) ?? '--'} unit="MWh" />
-          <StatCard label="Min" value={forecastStats?.min.toFixed(1) ?? '--'} unit="MWh" />
-          <StatCard label="Mean" value={forecastStats?.mean.toFixed(1) ?? '--'} unit="MWh" />
-          <StatCard label="Std" value={forecastStats?.std.toFixed(1) ?? '--'} unit="MWh" />
+          <StatCard label="Max" value={forecastStats ? (isCostMode ? `$${(forecastStats.max * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.max.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+          <StatCard label="Min" value={forecastStats ? (isCostMode ? `$${(forecastStats.min * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.min.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+          <StatCard label="Mean" value={forecastStats ? (isCostMode ? `$${(forecastStats.mean * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.mean.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+          <StatCard label="Std" value={forecastStats ? (isCostMode ? `$${(forecastStats.std * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.std.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
         </div>
 
         {forecastResult && (
@@ -163,18 +187,63 @@ export default function PredictionEngine() {
         {predictionResult && (
           <div className="col-span-12 mt-2">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-12 gap-6">
-              <div className="col-span-12 xl:col-span-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 content-start">
-                <MetricCard label="Ensemble" value={predictionResult.prediction} unit="MWh" icon={Icons.Brain} />
-                <MetricCard label="Uncertainty" value={predictionResult.uncertainty} unit="±MWh" icon={Icons.AlertCircle} />
-                <MetricCard label="XGBoost" value={predictionResult.xgb_pred} unit="MWh" icon={Icons.Cpu} />
-                <MetricCard label="LightGBM" value={predictionResult.lgb_pred} unit="MWh" icon={Icons.Cpu} />
+              
+              {/* Header with Export */}
+              <div className="col-span-12 flex justify-between items-center bg-white p-4 rounded-xl border border-border shadow-sm">
+                <h2 className="text-xl font-bold">Prediction Results</h2>
+                <button
+                  onClick={handleDownloadReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <Icons.Download className="w-4 h-4" />
+                  Export Detailed PDF Report
+                </button>
               </div>
+
+              {/* Metrics */}
+              <div className="col-span-12 xl:col-span-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 content-start">
+                <MetricCard label="Ensemble" value={isCostMode ? predictionResult.prediction * rate : predictionResult.prediction} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.Brain} />
+                <MetricCard label="Uncertainty" value={isCostMode ? predictionResult.uncertainty * rate : predictionResult.uncertainty} unit={isCostMode ? "±AUD" : "±MWh"} icon={Icons.AlertCircle} />
+                <MetricCard label="XGBoost" value={isCostMode ? predictionResult.xgb_pred * rate : predictionResult.xgb_pred} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.Cpu} />
+                <MetricCard label="LightGBM" value={isCostMode ? predictionResult.lgb_pred * rate : predictionResult.lgb_pred} unit={isCostMode ? "AUD" : "MWh"} icon={Icons.Cpu} />
+              </div>
+
+              {/* Chart */}
               <div className="col-span-12 xl:col-span-8">
                 <GlassCard className="h-full">
                   <h2 className="text-xl font-bold mb-4">Model Comparison</h2>
                   <ModelComparisonChart result={predictionResult} />
                 </GlassCard>
               </div>
+
+              {/* Explainable AI Breakdown */}
+              {predictionResult.feature_contributions && (
+                <div className="col-span-12">
+                  <GlassCard>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Icons.Search className="w-5 h-5 text-blue-600" />
+                      <h2 className="text-xl font-bold">Why did this happen? (Explainable AI)</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(predictionResult.feature_contributions).map(([feature, impact]) => (
+                        <div key={feature} className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+                          <span className="text-sm text-text-muted uppercase tracking-wider font-semibold mb-2">{feature}</span>
+                          <div className="flex items-end gap-2 mt-auto">
+                            <span className={cn(
+                              "text-xl font-black",
+                              impact > 0 ? "text-red-500" : "text-green-500"
+                            )}>
+                              {impact > 0 ? '+' : ''}{impact.toFixed(1)}
+                            </span>
+                            <span className="text-sm text-text-secondary pb-1">MWh impact</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </GlassCard>
+                </div>
+              )}
+
             </motion.div>
           </div>
         )}

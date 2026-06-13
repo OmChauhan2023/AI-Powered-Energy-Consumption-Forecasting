@@ -69,6 +69,7 @@ export interface PredictionResponse {
   xgb_weight: number
   lgb_weight: number
   cat_weight: number
+  feature_contributions?: Record<string, number>
   timestamp: string
 }
 
@@ -160,4 +161,20 @@ export interface WeatherForecastResponse {
   }
   source: string
   timestamp: string
+}
+
+// ── AI Insights & Reporting ─────────────────
+
+export interface ChatRequest {
+  message: string
+  context?: Record<string, any>
+}
+
+export interface ChatResponse {
+  response: string
+  timestamp: string
+}
+
+export interface ReportRequest {
+  data: Record<string, any>
 }

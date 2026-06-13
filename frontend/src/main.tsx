@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
+import { CostProvider } from './contexts/CostContext'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -20,8 +21,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
-        <Toaster
+        <CostProvider>
+          <App />
+          <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
@@ -36,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             error: { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } },
           }}
         />
+        </CostProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
