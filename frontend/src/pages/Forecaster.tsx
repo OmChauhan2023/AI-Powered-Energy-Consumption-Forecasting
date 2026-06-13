@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import * as Icons from 'lucide-react'
 import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 
@@ -8,6 +9,8 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { StatCard } from '@/components/ui/StatCard'
 import { SliderField } from '@/components/ui/SliderField'
 import { ForecastChart } from '@/components/charts/ForecastChart'
+import { ChatWidget } from '@/components/ui/ChatWidget'
+import { WeatherPanel } from '@/components/ui/WeatherPanel'
 import { useCost } from '@/contexts/CostContext'
 import { api } from '@/api/endpoints'
 
@@ -35,63 +38,158 @@ export default function Forecaster() {
       a + Math.pow(v - arr.reduce((x: number, y: number) => x + y) / arr.length, 2), 0) / forecastResult.forecasts.length),
   } : null
 
+  const handleDownloadReport = async () => {
+    if (!forecastResult) return
+    const loadingToast = toast.loading('Generating AI Report...')
+    try {
+      const payload = {
+        prediction: forecastStats?.mean.toFixed(1) || 0,
+        uncertainty: forecastStats?.std.toFixed(1) || 0,
+        features: {
+          horizon: `${horizon} Hours`,
+          max_load: forecastStats?.max.toFixed(1) || 0,
+          min_load: forecastStats?.min.toFixed(1) || 0
+        }
+      }
+      const blob = await api.generateReport({ data: payload })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Eagle_LongTerm_Forecast_${Date.now()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Report downloaded!', { id: loadingToast })
+    } catch {
+      toast.error('Failed to generate report', { id: loadingToast })
+    }
+  }
+
   return (
     <PageTransition>
-      <div className="grid grid-cols-12 gap-6 relative">
+      <div className="flex flex-col gap-6 relative">
+        <ChatWidget context={{ forecastResult, horizon }} />
         
-        <div className="col-span-12">
-          <div className="mb-2">
-            <h1 className="text-3xl font-extrabold tracking-tight">Long-Term Horizon Generator</h1>
-            <p className="text-text-secondary mt-2 max-w-3xl leading-relaxed">
-              Generate long-term energy forecasts to anticipate system loads over the coming days. The ensemble model produces an uncertainty band to help you prepare for peak deviations.
+        {/* =========================================================
+            HEADER 
+            ========================================================= */}
+        <div className="flex items-end justify-between bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-gray-900">
+              Long-Term Forecaster
+            </h1>
+            <p className="text-gray-500 text-lg">
+              Generate advanced energy projections. Weather constraints and historical lag patterns are utilized to build highly accurate confidence intervals.
             </p>
           </div>
         </div>
 
-        <div className="col-span-12 xl:col-span-8">
-          <GlassCard className="h-full">
-            <h2 className="text-xl font-bold mb-6">Simulation Horizon</h2>
-            <SliderField
-              label={`${horizon} Hours Ahead`}
-              min={1} max={168} value={horizon}
-              onChange={setHorizon} formatLabel={(v) => `${v} hours`}
-            />
-            <div className="flex gap-3 mt-6">
-              {[24, 48, 168].map(h => (
-                <motion.button key={h} onClick={() => setHorizon(h)}
-                  className="flex-1 px-4 py-2 rounded-btn bg-black/5 hover:bg-black/10 text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                >
-                  {h === 168 ? '7 Days' : `${h} Hours`}
-                </motion.button>
-              ))}
-            </div>
-            <motion.button
-              onClick={() => forecastMutation.mutate()} disabled={forecastMutation.isPending}
-              className="w-full mt-6 px-8 py-3 bg-gradient-brand rounded-btn font-bold text-white shadow-btn hover:shadow-btn-hover transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            >
-              {forecastMutation.isPending ? 'Generating...' : `Generate ${horizon}h Forecast`}
-            </motion.button>
-          </GlassCard>
-        </div>
-
-        <div className="col-span-12 xl:col-span-4 grid grid-cols-2 gap-3 content-start">
-          <StatCard label="Max" value={forecastStats ? (isCostMode ? `$${(forecastStats.max * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.max.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Min" value={forecastStats ? (isCostMode ? `$${(forecastStats.min * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.min.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Mean" value={forecastStats ? (isCostMode ? `$${(forecastStats.mean * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.mean.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-          <StatCard label="Std" value={forecastStats ? (isCostMode ? `$${(forecastStats.std * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.std.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
-        </div>
-
-        {forecastResult && (
-          <div className="col-span-12 mb-8 mt-2">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-              <GlassCard>
-                <h2 className="text-xl font-bold mb-4">Forecast with Uncertainty Band</h2>
-                <ForecastChart forecasts={forecastResult.forecasts} uncertainties={forecastResult.uncertainties} />
-              </GlassCard>
-            </motion.div>
+        {/* =========================================================
+            3-COLUMN DASHBOARD GRID
+            ========================================================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          
+          {/* COLUMN 1: Weather Context */}
+          <div className="flex flex-col gap-6 h-fit">
+             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-fit">
+                <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                  <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                    <Icons.CloudRain className="w-4 h-4 text-blue-500" />
+                    External Drivers
+                  </h3>
+                </div>
+                <div className="p-4 bg-gray-50/50">
+                  <WeatherPanel />
+                </div>
+             </div>
           </div>
+
+          {/* COLUMN 2: Simulation Controls */}
+          <div className="flex flex-col gap-6 h-fit">
+            <GlassCard className="!p-6 h-fit">
+              <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-6">
+                <Icons.Clock className="w-5 h-5 text-gray-400" />
+                Simulation Horizon
+              </h3>
+              <SliderField
+                label={`${horizon} Hours Ahead`}
+                min={1} max={168} value={horizon}
+                onChange={setHorizon} formatLabel={(v) => `${v} hours`}
+              />
+              <div className="flex gap-2 mt-6">
+                {[24, 48, 168].map(h => (
+                  <button key={h} onClick={() => setHorizon(h)}
+                    className="flex-1 py-2 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold text-sm transition-colors"
+                  >
+                    {h === 168 ? '7 Days' : `${h}h`}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => forecastMutation.mutate()} disabled={forecastMutation.isPending}
+                className="w-full mt-6 py-3.5 bg-black rounded-xl font-bold text-white shadow-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                {forecastMutation.isPending ? 'Generating...' : `Generate ${horizon}h Curve`}
+              </button>
+            </GlassCard>
+          </div>
+
+          {/* COLUMN 3: Executive Tools */}
+          <div className="flex flex-col gap-6 h-fit">
+            <GlassCard className="!p-6 h-fit border border-gray-200 bg-gradient-to-br from-white to-gray-50">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900 mb-1 flex items-center gap-2">
+                    <Icons.FileText className="w-5 h-5 text-purple-500" />
+                    Executive PDF Report
+                  </h3>
+                  <p className="text-xs text-gray-500 font-medium">Generate AI summary of forecast</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDownloadReport}
+                disabled={!forecastResult}
+                className="w-full py-3 bg-black text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Icons.Download className="w-4 h-4" />
+                Download PDF
+              </button>
+            </GlassCard>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <h4 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <Icons.AlertTriangle className="w-4 h-4 text-orange-500" /> Uncertainty Bands
+              </h4>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                The grey shaded area on the chart represents the 95% confidence interval. High variance indicates weather or time-of-day instability.
+              </p>
+            </div>
+          </div>
+          
+        </div>
+
+        {/* =========================================================
+            RESULTS AREA (BOTTOM SPAN)
+            ========================================================= */}
+        {forecastResult && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6 mb-8 mt-2">
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 content-start">
+              <StatCard label="Peak Forecast" value={forecastStats ? (isCostMode ? `$${(forecastStats.max * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.max.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+              <StatCard label="Minimum Forecast" value={forecastStats ? (isCostMode ? `$${(forecastStats.min * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.min.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+              <StatCard label="Average Demand" value={forecastStats ? (isCostMode ? `$${(forecastStats.mean * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.mean.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+              <StatCard label="Std Deviation" value={forecastStats ? (isCostMode ? `$${(forecastStats.std * rate).toLocaleString(undefined, {maximumFractionDigits:0})}` : forecastStats.std.toFixed(1)) : '--'} unit={isCostMode ? "" : "MWh"} />
+            </div>
+
+            <GlassCard className="border-2 border-black">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-extrabold text-gray-900">Projected Demand Curve</h2>
+                <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-3 py-1 rounded-full border border-gray-200">95% CONFIDENCE INTERVAL</span>
+              </div>
+              <ForecastChart forecasts={forecastResult.forecasts} uncertainties={forecastResult.uncertainties} />
+            </GlassCard>
+          </motion.div>
         )}
 
       </div>

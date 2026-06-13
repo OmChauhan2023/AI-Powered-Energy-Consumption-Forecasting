@@ -1,75 +1,88 @@
-import { useLocation, Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import * as Icons from 'lucide-react'
-import { NAV_ITEMS } from '@/lib/constants'
-import { useHealth } from '@/hooks/useHealth'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/api/endpoints'
+import { cn } from '@/lib/utils'
 import { useCost } from '@/contexts/CostContext'
-import { formatTimestamp, cn } from '@/lib/utils'
+import { NAV_ITEMS } from '@/lib/constants'
 
 export function TopBar() {
   const location = useLocation()
-  const { data: health } = useHealth()
+  const { data: health } = useQuery({
+    queryKey: ['health'],
+    queryFn: () => api.getHealth().then(res => res.data),
+    refetchInterval: 30000,
+  })
+
   const { isCostMode, toggleCostMode } = useCost()
 
   return (
-    <div className="sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur-md">
-      <div className="flex items-center justify-between px-6 py-3">
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200">
+      <div className="flex h-16 items-center px-6">
         
-        {/* Logo / Brand */}
+        {/* Branding */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white shadow-md">
-            <Icons.Zap className="h-5 w-5" />
+          <div className="bg-black p-2 rounded-xl flex items-center justify-center">
+            <Icons.Zap className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight hidden sm:block">Eagle AI Energy Forecaster</span>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-sm leading-tight text-gray-900 tracking-tight">Eagle AI Energy</span>
+            <span className="font-extrabold text-sm leading-tight text-gray-900 tracking-tight">Forecaster</span>
+          </div>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-black/5 p-1 rounded-xl">
+        {/* Navigation */}
+        <nav className="flex items-center gap-8 ml-16 h-full">
           {NAV_ITEMS.map((item) => {
-            const Icon = Icons[item.icon as keyof typeof Icons] as React.ElementType
+            const Icon = Icons[item.icon as keyof typeof Icons] as any
             const isActive = location.pathname === item.path
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-                  isActive 
-                    ? 'bg-white text-text-primary shadow-sm' 
-                    : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                  'relative flex items-center gap-2 h-full text-sm font-semibold transition-colors',
+                  isActive ? 'text-black' : 'text-gray-500 hover:text-black'
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={cn("w-4 h-4", isActive ? "text-black" : "text-gray-400")} />
                 <span>{item.label}</span>
+                {/* Active Indicator Line */}
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black rounded-t-full" />
+                )}
               </Link>
             )
           })}
         </nav>
 
-        {/* Right Status */}
+        <div className="flex-1" />
+
+        {/* Right Actions */}
         <div className="flex items-center gap-4">
+          
           <button
             onClick={toggleCostMode}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5 hover:bg-black/10 transition-colors text-xs font-semibold text-text-primary"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all text-xs font-bold text-gray-700"
           >
             {isCostMode ? <Icons.DollarSign className="w-4 h-4 text-emerald-600" /> : <Icons.Zap className="w-4 h-4 text-blue-600" />}
-            {isCostMode ? 'AUD ($)' : 'Energy (MWh)'}
+            {isCostMode ? 'Currency (AUD)' : 'Energy (MWh)'}
           </button>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5 border border-border">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-gray-50/50">
             <div
               className={cn(
                 'w-2 h-2 rounded-full',
-                health?.status === 'healthy' ? 'bg-success animate-pulse-slow' : 'bg-danger'
+                health?.status === 'healthy' ? 'bg-emerald-500 animate-pulse-slow shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
               )}
             />
-            <span className="text-xs font-medium text-text-secondary">
+            <span className="text-xs font-bold text-gray-600">
               {health?.status === 'healthy' ? 'API Online' : 'Offline'}
             </span>
           </div>
-          <span className="text-xs text-text-muted hidden lg:block">{formatTimestamp(health?.timestamp ?? null)}</span>
-        </div>
 
+        </div>
       </div>
-    </div>
+    </header>
   )
 }
