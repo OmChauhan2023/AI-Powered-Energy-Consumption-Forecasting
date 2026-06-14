@@ -167,13 +167,13 @@ export default function Settings() {
               </div>
 
               {/* LIVE LATENCY MONITOR */}
-              <div className="bg-slate-900 rounded-xl p-4 relative overflow-hidden flex flex-col justify-end">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 relative overflow-hidden flex flex-col justify-end">
                 <div className="absolute top-3 left-3 z-10">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${connectionStatus === 'ok' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
-                    <span className="text-[10px] text-slate-300 font-bold tracking-widest uppercase">Live Latency</span>
+                    <div className={`w-2 h-2 rounded-full ${connectionStatus === 'ok' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                    <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Live Latency</span>
                   </div>
-                  <div className="text-2xl font-black text-white mt-1">
+                  <div className="text-2xl font-black text-slate-900 mt-1">
                     {connectionStatus === 'ok' ? `${pingData[pingData.length - 1]}ms` : '-- ms'}
                   </div>
                 </div>
@@ -204,25 +204,25 @@ export default function Settings() {
               <Icons.Info className="w-5 h-5 text-violet-500" /> Fast-API System Diagnostics
             </h2>
             <div className="grid grid-cols-2 gap-4 mt-2">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <Icons.Code2 className="w-5 h-5 text-slate-400 mb-2" />
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
+                <Icons.Code2 className="w-5 h-5 text-indigo-500 mb-2" />
                 <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">API Version</p>
                 <p className="text-sm font-black text-slate-900">{health?.version ?? 'Offline'}</p>
               </div>
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                <Icons.Database className="w-5 h-5 text-blue-400 mb-2" />
-                <p className="text-[10px] uppercase font-bold text-blue-500 tracking-wider">Storage Link</p>
-                <p className="text-sm font-black text-blue-900">{health?.data_path_exists ? 'Verified' : 'Unreachable'}</p>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
+                <Icons.Database className="w-5 h-5 text-blue-500 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Storage Link</p>
+                <p className="text-sm font-black text-slate-900">{health?.data_path_exists ? 'Verified' : 'Unreachable'}</p>
               </div>
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-                <Icons.BrainCircuit className="w-5 h-5 text-emerald-400 mb-2" />
-                <p className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">Ensemble Models</p>
-                <p className="text-sm font-black text-emerald-900">{health?.models_loaded ? 'Loaded into VRAM' : 'Unloaded'}</p>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
+                <Icons.BrainCircuit className="w-5 h-5 text-emerald-500 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Ensemble Models</p>
+                <p className="text-sm font-black text-slate-900">{health?.models_loaded ? 'Loaded into VRAM' : 'Unloaded'}</p>
               </div>
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                <Icons.Clock className="w-5 h-5 text-amber-400 mb-2" />
-                <p className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Last Sync</p>
-                <p className="text-sm font-black text-amber-900">{health?.last_training ? formatTimestamp(health?.last_training) : 'N/A'}</p>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
+                <Icons.Clock className="w-5 h-5 text-amber-500 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Last Sync</p>
+                <p className="text-sm font-black text-slate-900">{health?.last_training ? formatTimestamp(health?.last_training) : 'N/A'}</p>
               </div>
             </div>
           </GlassCard>

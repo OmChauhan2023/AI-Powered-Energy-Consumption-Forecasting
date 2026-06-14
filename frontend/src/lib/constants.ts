@@ -5,7 +5,7 @@ export const NAV_ITEMS = [
   { path: '/forecast', label: 'Forecaster', icon: 'LineChart' },
   { path: '/analytics', label: 'Grid Operations', icon: 'Activity' },
   { path: '/monitoring', label: 'Model Specs', icon: 'Network' },
-  { path: '/training', label: 'Training', icon: 'Brain' },
+  { path: '/training', label: 'Pipeline Control', icon: 'Cpu' },
   { path: '/settings', label: 'Settings', icon: 'Settings' },
 ] as const
 
