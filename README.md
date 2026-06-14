@@ -103,39 +103,32 @@ docker-compose up -d
 
 ```
 energy-forecasting/
-├── agents/                          # 4-Agent system
-│   ├── data_agent.py               # Data loading & preprocessing
-│   ├── training_agent.py           # Model training & ensemble
-│   ├── inference_agent.py          # Predictions & forecasting
-│   ├── monitoring_agent.py         # Performance & drift detection
-│   └── orchestrator.py             # Agent coordination
+├── backend/                         # FastAPI & ML Backend
+│   ├── agents/                      # 4-Agent orchestrator system
+│   ├── api/                         # FastAPI endpoints & models
+│   ├── src/                         # Data processing & feature engineering
+│   ├── data/                        # Raw & processed CSV datasets
+│   ├── models/                      # Saved ensemble weights & Optuna trials
+│   ├── outputs/                     # Generated charts and logs
+│   └── requirements.txt             # Python dependencies
 │
-├── api/                             # FastAPI backend
-│   ├── main.py                     # REST endpoints
-│   └── models.py                   # Pydantic models
-│
-├── frontend/                        # React TypeScript dashboard
+├── frontend/                        # React Enterprise Dashboard
 │   ├── src/
-│   │   ├── pages/                 # Dashboard pages (7 pages)
-│   │   ├── components/            # Reusable components
-│   │   ├── api/                   # API client
-│   │   └── hooks/                 # Custom React hooks
-│   └── package.json
+│   │   ├── pages/                   # 7-page Control Plane views
+│   │   ├── components/              # Interactive ECharts & Glass UI
+│   │   ├── api/                     # Axios client & Types
+│   │   ├── hooks/                   # Custom React hooks
+│   │   └── store/                   # Zustand state management
+│   ├── package.json
+│   └── vite.config.ts
 │
-├── src/                             # Data processing utilities
-│   └── preprocessing.py            # Feature engineering
-│
-├── data/                            # Input data (energy_consumption.csv)
-├── models/                          # Trained model files (pickle)
-├── outputs/                         # Results & visualizations
-│
-├── PROJECT_PRESENTATION.md         # 18-slide presentation for judges
-├── TECHNICAL_DOCUMENTATION.md      # Complete system documentation
-├── DOCUMENTS_GUIDE.md              # Navigation guide
-├── requirements.txt                # Python dependencies
-├── Dockerfile                      # Container setup
-├── docker-compose.yml              # Multi-service orchestration
-└── README.md                       # This file
+├── deployment_guide.md              # Vercel & Render instructions
+├── PROJECT_PRESENTATION.md          # 18-slide presentation for judges
+├── TECHNICAL_DOCUMENTATION.md       # Complete system documentation
+├── DOCUMENTS_GUIDE.md               # Navigation guide
+├── Dockerfile                       # Container setup
+├── docker-compose.yml               # Multi-service orchestration
+└── README.md                        # This file
 ```
 
 ---
