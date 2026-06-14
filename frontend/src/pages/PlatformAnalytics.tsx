@@ -48,10 +48,10 @@ export default function PlatformAnalytics() {
             {/* Top row inside the box: The 4 Metrics */}
             <div className="bg-gray-50/50 border-b border-gray-200 p-5">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <MetricCard label="Current Load" value={currentMWh.toFixed(2)} unit="MWh" icon={Icons.Zap} />
-                <MetricCard label="24h Average" value={avg24h.toFixed(2)} unit="MWh" icon={Icons.BarChart2} />
-                <MetricCard label="Peak (24h)" value={peak24h.toFixed(2)} unit="MWh" icon={Icons.TrendingUp} />
-                <MetricCard label="Min (24h)" value={min24h.toFixed(2)} unit="MWh" icon={Icons.TrendingDown} />
+                <MetricCard label="Current Load" value={Number(currentMWh.toFixed(2))} unit="MWh" icon={Icons.Zap} />
+                <MetricCard label="24h Average" value={Number(avg24h.toFixed(2))} unit="MWh" icon={Icons.BarChart2} />
+                <MetricCard label="Peak (24h)" value={Number(peak24h.toFixed(2))} unit="MWh" icon={Icons.TrendingUp} />
+                <MetricCard label="Min (24h)" value={Number(min24h.toFixed(2))} unit="MWh" icon={Icons.TrendingDown} />
               </div>
             </div>
             {/* Bottom row inside the box: The Chart */}

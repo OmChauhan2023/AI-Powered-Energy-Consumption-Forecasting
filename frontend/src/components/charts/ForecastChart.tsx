@@ -1,4 +1,4 @@
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, ReferenceArea } from 'recharts'
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceArea } from 'recharts'
 import { CHART_COLORS, CHART_DEFAULTS } from '@/lib/constants'
 
 export interface HighlightRegion {

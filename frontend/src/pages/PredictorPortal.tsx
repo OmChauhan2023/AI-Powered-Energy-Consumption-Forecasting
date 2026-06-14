@@ -10,7 +10,7 @@ import { SliderField } from '@/components/ui/SliderField'
 import { ChatWidget } from '@/components/ui/ChatWidget'
 import { api } from '@/api/endpoints'
 import { SCENARIOS } from '@/lib/constants'
-import { hourLabel, dayLabel, monthLabel, cn } from '@/lib/utils'
+import { hourLabel, monthLabel, cn } from '@/lib/utils'
 import type { PredictionFeatures, PredictionResponse } from '@/api/types'
 
 const FINANCIAL_RATE_AUD = 134 // Updated market rate: $134 per MWh

@@ -9,7 +9,7 @@ export function TopBar() {
   const location = useLocation()
   const { data: health } = useQuery({
     queryKey: ['health'],
-    queryFn: () => api.getHealth().then(res => res.data),
+    queryFn: () => api.getHealth(),
     refetchInterval: 30000,
   })
 
