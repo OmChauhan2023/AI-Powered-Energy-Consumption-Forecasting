@@ -35,8 +35,10 @@ export default function Forecaster() {
   useEffect(() => {
     const handler = setTimeout(() => {
       const forecasts: number[] = []
+      const baselines: number[] = []
       const uncertainties: number[] = []
       const labels: string[] = []
+      const highlights: {start: string, end: string, label: string, color: string}[] = []
       
       const baseMonthlyMWh = 120 * 24 * 30 // ~86,400 MWh
       
@@ -44,39 +46,47 @@ export default function Forecaster() {
       let currentYear = today.getFullYear()
       let currentMonth = today.getMonth()
 
+      let pandemicStartLabel = ''
+      let pandemicEndLabel = ''
+      let evStartLabel = ''
+
       for (let i = 0; i <= horizonMonths; i++) {
         const yearsAhead = i / 12
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const label = `${monthNames[currentMonth]} '${String(currentYear).slice(-2)}`
+        labels.push(label)
         
-        // 1. Apply YOY Growth (Compounding)
-        let multiplier = Math.pow(1 + (yoyGrowth / 100), yearsAhead)
+        // 1. Baseline Multiplier (Growth + Seasonality)
+        const baseGrowth = Math.pow(1 + (yoyGrowth / 100), yearsAhead)
+        const seasonMultiplier = 1 + (Math.sin((currentMonth / 12) * Math.PI * 2) * 0.1)
+        const baseMultiplier = baseGrowth * seasonMultiplier
         
-        // 2. Apply Seasonality (sine wave based on month)
-        const seasonMultiplier = 1 + (Math.sin((currentMonth / 12) * Math.PI * 2) * 0.1) // +/- 10%
+        // Save unshocked baseline
+        baselines.push(baseMonthlyMWh * baseMultiplier)
+
+        // 2. Shock Multiplier (Pandemic & EV)
+        let shockMultiplier = baseMultiplier
         
-        // 3. Pandemic Shock (Drop demand by 15% between months 12 and 36)
-        if (hasPandemic && i > 12 && i < 36) {
-           // Create a V-shape drop and recovery
-           const shockDepth = Math.min(i - 12, 36 - i) / 12 // peaks at 1.0
-           multiplier *= (1 - (0.15 * shockDepth))
+        if (hasPandemic && i > 12 && i <= 36) {
+           const shockDepth = Math.min(i - 12, 36 - i) / 12
+           shockMultiplier *= (1 - (0.15 * shockDepth))
+           if (i === 13) pandemicStartLabel = label
+           if (i === 36) pandemicEndLabel = label
         }
         
-        // 4. EV Boom (Exponential surge starting year 3)
         if (hasEvBoom && yearsAhead > 3) {
-          multiplier *= Math.pow(1.08, yearsAhead - 3) // Extra 8% compounding
+          shockMultiplier *= Math.pow(1.08, yearsAhead - 3)
+          if (Math.abs(yearsAhead - 3) < 0.1 && evStartLabel === '') evStartLabel = label
         }
 
-        // Add 3% random noise
+        // Add 3% random noise to the actual forecast
         const noise = (Math.random() - 0.5) * 0.06
-        multiplier *= (1 + noise)
+        shockMultiplier *= (1 + noise)
         
-        const val = baseMonthlyMWh * multiplier * seasonMultiplier
+        const val = baseMonthlyMWh * shockMultiplier
         forecasts.push(val)
         
-        // Uncertainty grows over time (cone of uncertainty)
         uncertainties.push(val * (0.05 + (yearsAhead * 0.015))) 
-        
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        labels.push(`${monthNames[currentMonth]} '${String(currentYear).slice(-2)}`)
         
         currentMonth++
         if (currentMonth > 11) {
@@ -85,8 +95,16 @@ export default function Forecaster() {
         }
       }
 
-      setForecastResult({ forecasts, uncertainties, labels, horizon: horizonMonths })
-    }, 100) // Fast debounce
+      if (hasPandemic && pandemicStartLabel && pandemicEndLabel) {
+        highlights.push({ start: pandemicStartLabel, end: pandemicEndLabel, label: 'Pandemic Recession', color: '#ef4444' })
+      }
+      
+      if (hasEvBoom && evStartLabel) {
+        highlights.push({ start: evStartLabel, end: labels[labels.length - 1], label: 'EV Exponential Surge', color: '#10b981' })
+      }
+
+      setForecastResult({ forecasts, baselines, uncertainties, labels, highlights, horizon: horizonMonths })
+    }, 100)
     return () => clearTimeout(handler)
   }, [horizonMonths, yoyGrowth, hasPandemic, hasEvBoom])
 
@@ -271,8 +289,10 @@ export default function Forecaster() {
                   <div className="p-6 bg-white min-h-[500px]">
                     <ForecastChart 
                       forecasts={forecastResult.forecasts} 
+                      baselines={forecastResult.baselines}
                       uncertainties={forecastResult.uncertainties} 
                       labels={forecastResult.labels} 
+                      highlights={forecastResult.highlights}
                     />
                   </div>
                 </GlassCard>
