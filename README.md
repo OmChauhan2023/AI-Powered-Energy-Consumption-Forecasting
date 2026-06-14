@@ -40,15 +40,14 @@ This is a **production-grade energy consumption forecasting system** built for t
 - **Deployment:** Docker & Docker Compose ready
 - **Monitoring:** Real-time drift detection, anomaly detection, performance tracking
 
-### 🎨 The Enterprise "Control Plane" Dashboard (New Addition)
-Overnight, the frontend was completely overhauled into a highly complex, information-dense architectural Control Plane. We prioritized premium UI aesthetics (glassmorphism, subtle animations, slate-monochromatic themes) to create a dashboard that feels "alive."
+### 🎨 Enterprise Dashboard
+The frontend is a highly complex, information-dense React application designed for operational control and real-time monitoring.
 
-- **Massive Information Density:** Over 20+ interactive ECharts distributed across 7 distinct operational pages.
-- **Predictor Portal:** A live interface with Sliders and Scenario Buttons (Peak, Off-Peak, Winter) to instantly simulate grid impact and trigger the Ensemble model.
-- **Exploratory Data Analysis (EDA):** Deep-dive visual analytics including Target Variable Distributions, Daily/Monthly Seasonality Profiles, Temperature vs. Load correlations, and Weekly Load tracking.
-- **Pipeline Control:** Live visualization of the Optuna Hyperparameter Landscape (200 trials mapped).
-- **Model Specs Architecture:** A beautiful directed graph mapping the exact workflow of the 4-Agent Orchestrator pipeline.
-- **System Diagnostics:** Real-time polling API Ping Latency monitor and Ensemble Model VRAM loading status blocks.
+- **Predictor Portal:** A live interface with interactive scenario simulations (Peak, Off-Peak, Winter) to instantly evaluate grid impact.
+- **Exploratory Data Analysis (EDA):** Visual analytics including target variable distributions, daily/monthly seasonality profiles, and temperature correlations.
+- **Pipeline Control:** Live visualization of the Optuna hyperparameter tuning landscape.
+- **Model Architecture:** Interactive directed graphs mapping the exact workflow of the 4-Agent Orchestrator pipeline.
+- **System Diagnostics:** Real-time API latency monitoring and Ensemble Model status tracking.
 
 ### 📈 Advanced Features
 - **Uncertainty Quantification** - Confidence intervals for all predictions
