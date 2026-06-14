@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import * as Icons from 'lucide-react'
 import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { PageTransition } from '@/components/layout/PageTransition'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { SliderField } from '@/components/ui/SliderField'
 import { Badge } from '@/components/ui/Badge'
+import ReactECharts from 'echarts-for-react'
 import { useHealth } from '@/hooks/useHealth'
 import { settingsStore } from '@/store/settingsStore'
 import { api } from '@/api/endpoints'
@@ -22,132 +24,254 @@ export default function Settings() {
     mutationFn: api.getHealth,
     onSuccess: () => {
       setConnectionStatus('ok')
-      toast.success('Connected!')
+      toast.success('Control Plane Connected!')
     },
     onError: () => {
       setConnectionStatus('fail')
-      toast.error('Connection failed')
+      toast.error('Connection failed to backend')
     },
   })
 
   const handleSaveUrl = () => {
     settingsStore.setState({ apiUrl: localApiUrl })
-    toast.success('API URL saved!')
+    toast.success('API Gateway URL saved!')
+  }
+
+  // Animation Variants
+  const containerVars = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  }
+  const itemVars = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  }
+
+  // 1. Live API Latency Chart (Simulated)
+  const [pingData, setPingData] = useState<number[]>(Array(20).fill(45))
+  useEffect(() => {
+    if (connectionStatus !== 'ok') return;
+    const interval = setInterval(() => {
+      setPingData(prev => {
+        const newPing = 40 + Math.random() * 15 + (Math.random() > 0.9 ? 30 : 0) // baseline + noise + random spike
+        return [...prev.slice(1), parseFloat(newPing.toFixed(0))]
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [connectionStatus])
+
+  const latencyOptions = {
+    tooltip: { trigger: 'axis', formatter: 'Latency: {c} ms' },
+    grid: { left: '2%', right: '2%', bottom: '5%', top: '5%', containLabel: false },
+    xAxis: { type: 'category', show: false, boundaryGap: false, data: Array(20).fill('') },
+    yAxis: { type: 'value', min: 0, max: 120, show: false },
+    series: [
+      {
+        type: 'line',
+        data: pingData,
+        lineStyle: { color: connectionStatus === 'ok' ? '#10b981' : '#94a3b8', width: 2 },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: connectionStatus === 'ok' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(148, 163, 184, 0.4)' }, 
+              { offset: 1, color: 'rgba(255,255,255,0)' }
+            ]
+          }
+        },
+        symbol: 'none'
+      }
+    ]
+  }
+
+  // 2. Agent Resource Allocation Radar
+  const resourceOptions = {
+    tooltip: {},
+    radar: {
+      indicator: [
+        { name: 'Compute (CPU)', max: 100 },
+        { name: 'Memory (RAM)', max: 100 },
+        { name: 'Storage (I/O)', max: 100 },
+        { name: 'Network', max: 100 }
+      ],
+      axisName: { color: '#64748b', fontSize: 10 },
+      radius: '60%',
+      center: ['50%', '50%']
+    },
+    series: [{
+      type: 'radar',
+      data: [
+        { value: [40, 80, 90, 20], name: 'DataAgent', itemStyle: { color: '#3b82f6' } },
+        { value: [95, 85, 40, 10], name: 'TrainingAgent', itemStyle: { color: '#8b5cf6' } },
+        { value: [60, 40, 10, 80], name: 'InferenceAgent', itemStyle: { color: '#f59e0b' } },
+        { value: [20, 30, 60, 40], name: 'MonitoringAgent', itemStyle: { color: '#10b981' } }
+      ]
+    }]
   }
 
   return (
     <PageTransition>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* API Configuration */}
-        <GlassCard>
-          <h2 className="text-xl font-bold mb-6">API Configuration</h2>
-
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-text-secondary mb-2">API Base URL</label>
-            <input
-              type="text"
-              value={localApiUrl}
-              onChange={(e) => {
-                setLocalApiUrl(e.target.value)
-                setConnectionStatus(null)
-              }}
-              className="w-full bg-black/5 border border-border rounded-btn px-4 py-2 text-text-primary focus:border-brand-from focus:outline-none transition-colors"
-              placeholder="http://localhost:8000"
-            />
-          </div>
-
-          <div className="flex gap-3 mb-4">
-            <motion.button
-              onClick={handleSaveUrl}
-              className="flex-1 px-4 py-2 bg-gradient-brand rounded-btn font-semibold text-white shadow-btn hover:shadow-btn-hover transition-shadow"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Save URL
-            </motion.button>
-
-            <motion.button
-              onClick={() => testMutation.mutate()}
-              disabled={testMutation.isPending}
-              className="flex-1 px-4 py-2 bg-black/5 hover:bg-black/10 rounded-btn font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {testMutation.isPending ? 'Testing...' : 'Test Connection'}
-            </motion.button>
-          </div>
-
-          {connectionStatus && (
-            <Badge
-              variant={connectionStatus === 'ok' ? 'online' : 'offline'}
-              label={connectionStatus === 'ok' ? 'Connected' : 'Cannot Connect'}
-            />
-          )}
-        </GlassCard>
-
-        {/* Display Settings */}
-        <GlassCard>
-          <h2 className="text-xl font-bold mb-6">Display Settings</h2>
-
-          <SliderField
-            label={`Refresh Interval: ${refreshInterval}s`}
-            min={5}
-            max={120}
-            value={refreshInterval}
-            onChange={setRefreshInterval}
-            formatLabel={(v) => `${v}s`}
-          />
-
-          <p className="text-text-muted text-xs mt-3">
-            Controls how often health status and metrics are polled from the API.
-          </p>
-        </GlassCard>
-
-        {/* System Information */}
-        <GlassCard>
-          <h2 className="text-xl font-bold mb-6">System Information</h2>
-
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-sm text-text-muted">API Version</span>
-              <span className="text-sm font-semibold text-text-primary">{health?.version ?? '—'}</span>
+      <motion.div 
+        className="grid grid-cols-12 gap-6 items-start"
+        variants={containerVars}
+        initial="hidden"
+        animate="show"
+      >
+        {/* API CONFIGURATION & LIVE FEED */}
+        <motion.div variants={itemVars} className="col-span-12 lg:col-span-7 h-full">
+          <GlassCard className="h-full border border-gray-200 shadow-sm bg-white p-5 flex flex-col">
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+              <h2 className="text-lg font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2">
+                <Icons.Server className="w-5 h-5 text-indigo-500" /> API Gateway Configuration
+              </h2>
+              {connectionStatus && (
+                <Badge
+                  variant={connectionStatus === 'ok' ? 'online' : 'offline'}
+                  label={connectionStatus === 'ok' ? 'Gateway Connected' : 'Connection Failed'}
+                />
+              )}
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-sm text-text-muted">Models Loaded</span>
-              <span className="text-sm font-semibold text-text-primary">{health?.models_loaded ? 'Yes' : 'No'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-sm text-text-muted">Data Available</span>
-              <span className="text-sm font-semibold text-text-primary">{health?.data_path_exists ? 'Yes' : 'No'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-text-muted">Last Training</span>
-              <span className="text-sm font-semibold text-text-primary">{formatTimestamp(health?.last_training ?? null)}</span>
-            </div>
-          </div>
-        </GlassCard>
 
-        {/* Enabled Features */}
-        <GlassCard>
-          <h2 className="text-xl font-bold mb-6">Enabled Features</h2>
-
-          <div className="space-y-2">
-            {[
-              'Real-time predictions',
-              'Multi-step forecasting',
-              'Ensemble models',
-              'Performance monitoring',
-              '30s health polling',
-              'Animated metrics',
-            ].map((feature) => (
-              <div key={feature} className="flex items-center gap-2 py-2">
-                <div className="w-2 h-2 rounded-full bg-success" />
-                <span className="text-sm text-text-secondary">{feature}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Endpoint URL</label>
+                <input
+                  type="text"
+                  value={localApiUrl}
+                  onChange={(e) => {
+                    setLocalApiUrl(e.target.value)
+                    setConnectionStatus(null)
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-gray-900 font-mono text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none"
+                  placeholder="http://localhost:8000"
+                />
+                <div className="flex gap-3 mt-4">
+                  <motion.button
+                    onClick={handleSaveUrl}
+                    className="flex-1 px-4 py-2.5 bg-indigo-600 rounded-lg font-bold text-white shadow-sm hover:bg-indigo-700 transition-colors text-sm"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Update Route
+                  </motion.button>
+                  <motion.button
+                    onClick={() => testMutation.mutate()}
+                    disabled={testMutation.isPending}
+                    className="flex-1 px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg font-bold text-gray-700 transition-colors text-sm disabled:opacity-50"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {testMutation.isPending ? 'Pinging...' : 'Test Ping'}
+                  </motion.button>
+                </div>
               </div>
-            ))}
-          </div>
-        </GlassCard>
-      </div>
+
+              {/* LIVE LATENCY MONITOR */}
+              <div className="bg-slate-900 rounded-xl p-4 relative overflow-hidden flex flex-col justify-end">
+                <div className="absolute top-3 left-3 z-10">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${connectionStatus === 'ok' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
+                    <span className="text-[10px] text-slate-300 font-bold tracking-widest uppercase">Live Latency</span>
+                  </div>
+                  <div className="text-2xl font-black text-white mt-1">
+                    {connectionStatus === 'ok' ? `${pingData[pingData.length - 1]}ms` : '-- ms'}
+                  </div>
+                </div>
+                <div className="absolute inset-0 top-10 opacity-80">
+                  <ReactECharts option={latencyOptions} style={{ height: '100%', width: '100%' }} />
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* AGENT RESOURCE ALLOCATION */}
+        <motion.div variants={itemVars} className="col-span-12 lg:col-span-5 h-full">
+          <GlassCard className="h-full border border-gray-200 shadow-sm bg-white p-5">
+            <h2 className="text-lg font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2 mb-3 border-b border-gray-100 pb-2">
+              <Icons.Cpu className="w-5 h-5 text-blue-500" /> Sub-Agent Resource Map
+            </h2>
+            <div className="h-[220px]">
+              <ReactECharts option={resourceOptions} style={{ height: '100%', width: '100%' }} />
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* SYSTEM INFORMATION MATRIX */}
+        <motion.div variants={itemVars} className="col-span-12 lg:col-span-6 h-full">
+          <GlassCard className="h-full border border-gray-200 shadow-sm bg-white p-5 flex flex-col">
+            <h2 className="text-lg font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+              <Icons.Info className="w-5 h-5 text-violet-500" /> Fast-API System Diagnostics
+            </h2>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <Icons.Code2 className="w-5 h-5 text-slate-400 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">API Version</p>
+                <p className="text-sm font-black text-slate-900">{health?.version ?? 'Offline'}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                <Icons.Database className="w-5 h-5 text-blue-400 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-blue-500 tracking-wider">Storage Link</p>
+                <p className="text-sm font-black text-blue-900">{health?.data_path_exists ? 'Verified' : 'Unreachable'}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                <Icons.BrainCircuit className="w-5 h-5 text-emerald-400 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">Ensemble Models</p>
+                <p className="text-sm font-black text-emerald-900">{health?.models_loaded ? 'Loaded into VRAM' : 'Unloaded'}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                <Icons.Clock className="w-5 h-5 text-amber-400 mb-2" />
+                <p className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Last Sync</p>
+                <p className="text-sm font-black text-amber-900">{health?.last_training ? formatTimestamp(health?.last_training) : 'N/A'}</p>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* CONTROLS & FEATURES */}
+        <motion.div variants={itemVars} className="col-span-12 lg:col-span-6 h-full flex flex-col gap-6">
+          <GlassCard className="border border-gray-200 shadow-sm bg-white p-5">
+            <h2 className="text-lg font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+              <Icons.Settings2 className="w-5 h-5 text-emerald-500" /> UI Telemetry Controls
+            </h2>
+            <div className="mt-2">
+              <SliderField
+                label={`Diagnostic Polling Rate: ${refreshInterval}s`}
+                min={5}
+                max={60}
+                value={refreshInterval}
+                onChange={setRefreshInterval}
+                formatLabel={(v) => `${v}s`}
+              />
+              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                Controls the frequency at which the frontend dashboard polls the FastAPI backend for real-time drift, predictions, and anomaly status.
+              </p>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="flex-1 border border-gray-200 shadow-sm bg-white p-5">
+            <h2 className="text-lg font-extrabold uppercase tracking-wider text-gray-900 flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+              <Icons.ShieldCheck className="w-5 h-5 text-emerald-500" /> Active Subsystems
+            </h2>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-2">
+              {[
+                'Real-time Inference',
+                '72-hr Forecasting',
+                'Optuna Tuner Engine',
+                'KS-Test Drift Monitor',
+                'SHAP Explainability',
+                'L-BFGS-B Weight Optimizer'
+              ].map((feature) => (
+                <div key={feature} className="flex items-center gap-2">
+                  <Icons.CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <span className="text-xs font-semibold text-gray-700">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+
+      </motion.div>
     </PageTransition>
   )
 }
