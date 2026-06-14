@@ -29,15 +29,15 @@ export default function Monitoring() {
         edgeSymbol: ['none', 'arrow'],
         edgeSymbolSize: [0, 10],
         data: [
-          { name: 'AEMO Raw CSV', x: 0, y: 150, itemStyle: { color: '#94a3b8' } },
+          { name: 'Historical Raw CSV', x: 0, y: 150, itemStyle: { color: '#94a3b8' } },
           { name: 'DataAgent\n(Preprocessing)', x: 200, y: 150, itemStyle: { color: '#3b82f6' } }, // Blue
           { name: 'TrainingAgent\n(Optuna Tune)', x: 400, y: 50, itemStyle: { color: '#8b5cf6' } }, // Violet
-          { name: 'InferenceAgent\n(Multi-step)', x: 400, y: 250, itemStyle: { color: '#f59e0b' } }, // Amber
+          { name: 'InferenceAgent\n(Multi-step)', x: 400, y: 220, itemStyle: { color: '#f59e0b' }, label: { position: 'top' } }, // Amber
           { name: 'MonitoringAgent\n(Drift Check)', x: 600, y: 150, itemStyle: { color: '#10b981' } }, // Emerald
           { name: 'FastAPI / UI', x: 800, y: 150, itemStyle: { color: '#94a3b8' } }
         ],
         links: [
-          { source: 'AEMO Raw CSV', target: 'DataAgent\n(Preprocessing)' },
+          { source: 'Historical Raw CSV', target: 'DataAgent\n(Preprocessing)' },
           { source: 'DataAgent\n(Preprocessing)', target: 'TrainingAgent\n(Optuna Tune)' },
           { source: 'DataAgent\n(Preprocessing)', target: 'InferenceAgent\n(Multi-step)' },
           { source: 'TrainingAgent\n(Optuna Tune)', target: 'InferenceAgent\n(Multi-step)' },
@@ -201,7 +201,7 @@ export default function Monitoring() {
               <div className="col-span-1 lg:col-span-1 text-sm text-gray-600 space-y-3 leading-relaxed">
                 <p><strong>Significance:</strong> The system is powered by four specialized, modular agents rather than a monolithic script.</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong className="text-blue-600">DataAgent:</strong> Cleans raw AEMO data and generates 35+ temporal/lag features.</li>
+                  <li><strong className="text-blue-600">DataAgent:</strong> Cleans raw historical data and generates 35+ temporal/lag features.</li>
                   <li><strong className="text-violet-600">TrainingAgent:</strong> Tunes hyperparameters via Optuna and optimizes ensemble weights.</li>
                   <li><strong className="text-amber-600">InferenceAgent:</strong> Generates multi-step forecasts with confidence intervals.</li>
                   <li><strong className="text-emerald-600">MonitoringAgent:</strong> Tracks data drift and detects anomalies in real-time.</li>
