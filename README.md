@@ -1,16 +1,16 @@
 # ⚡ Energy Consumption Forecasting System
 **An AI-Powered Multi-Agent ML Pipeline for Hourly Energy Prediction**
 
-> **🏆 Adani Powermind Hackathon - May 2026**
-> 
-> Built by **Team Eagle**: Om Chauhan, Dhruv Patel, Kshitij Srivastava, Jaimin Koriya, and Anand Tiwari.
-
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
 
 ---
+
+> **🏆 Adani Powermind Hackathon - May 2026**
+> 
+> Built by **Team Eagle**: Om Chauhan, Dhruv Patel, Kshitij Srivastava, Jaimin Koriya, and Anand Tiwari.
 
 ## 🎯 Project Overview
 
@@ -328,20 +328,6 @@ docker build -t energy-dashboard -f Dockerfile.streamlit .
 docker-compose up -d
 ```
 
-### Services
-- **API** (Port 8000) - FastAPI with health checks
-- **Dashboard** (Port 8501) - Streamlit interface
-- Optional: PostgreSQL for metrics persistence
-
-### Production Configuration
-- HTTPS/SSL support
-- JWT authentication
-- Rate limiting
-- Load balancing (Nginx)
-- Horizontal scaling with Kubernetes
-
----
-
 ## 📚 Documentation
 
 This project includes comprehensive documentation:
@@ -400,96 +386,3 @@ This project includes comprehensive documentation:
 - **Industrial Consumers** - Schedule energy-intensive processes optimally
 
 ---
-
-## 🚀 Deployment Options
-
-### Local Development
-```bash
-uvicorn api.main:app --reload --port 8000
-cd frontend && npm run dev
-```
-
-### Docker
-```bash
-docker-compose up -d
-```
-
----
-
-## ⚙️ Configuration
-
-### Environment Variables
-```bash
-API_HOST=0.0.0.0
-API_PORT=8000
-DASHBOARD_PORT=8501
-DATA_PATH=data/energy_consumption.csv
-MODEL_DIR=models/
-OUTPUT_DIR=outputs/
-```
-
-### Model Files
-- `models/ensemble_xgb.pkl` - XGBoost model
-- `models/ensemble_lgb.pkl` - LightGBM model
-- `models/ensemble_cat.pkl` - CatBoost model
-- `models/ensemble_meta.pkl` - Ensemble weights
-
----
-
-## 📊 Performance Benchmarks
-
-```
-Latency:
-- Single prediction: <100ms
-- Batch (1,000): <500ms
-- Batch (10,000): ~4s
-- 24-hour forecast: <200ms
-
-Memory:
-- API startup: ~800 MB
-- Models on disk: ~1.2 GB
-- Dashboard: ~400 MB
-
-Scalability:
-- 1,000+ predictions/second (horizontal scaling)
-- Async endpoints for concurrent requests
-- Docker containers for quick scaling
-```
-
----
-
-## 🔐 Security Considerations
-
-- Enable HTTPS/SSL in production
-- Implement JWT authentication for API
-- Configure CORS restrictions
-- Rate limiting on endpoints
-- Input validation with Pydantic
-- Secure model file storage
-
----
-
-## 🙋 Support & Questions
-
-- **API Documentation:** http://localhost:8000/docs
-- **Technical Guide:** See TECHNICAL_DOCUMENTATION.md
-- **Presentation:** See PROJECT_PRESENTATION.md
-- **Architecture:** See agents/orchestrator.py
-
----
-
-## 🎯 Project Status
-- ✓ 4-Agent system fully implemented
-- ✓ Ensemble ML models trained & optimized
-- ✓ FastAPI backend with 10+ endpoints
-- ✓ React interactive dashboard
-- ✓ Real-time monitoring & drift detection
-- ✓ Docker containerization ready
-- ✓ Comprehensive documentation
-- ✓ 23% accuracy improvement achieved
-
----
-
-**Built with ❤️ for the Powermind Hackathon by Team Eagle**
-
-⚡ *Powering smarter energy decisions through AI* ⚡

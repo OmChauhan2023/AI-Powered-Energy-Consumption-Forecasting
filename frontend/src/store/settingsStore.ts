@@ -11,7 +11,7 @@ interface SettingsState {
 export const settingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      apiUrl: 'http://localhost:8000',
+      apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000',
       refreshInterval: 30,
       setApiUrl: (apiUrl) => set({ apiUrl }),
       setRefreshInterval: (refreshInterval) => set({ refreshInterval }),
