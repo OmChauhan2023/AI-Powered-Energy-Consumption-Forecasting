@@ -8,9 +8,9 @@
 
 ---
 
-> **🏆 Adani Powermind Hackathon - May 2026**
-> 
-> Built by **Team Eagle**: Om Chauhan, Dhruv Patel, Kshitij Srivastava, Jaimin Koriya, and Anand Tiwari.
+**🏆 Adani Powermind Hackathon - May 2026**
+
+Built by **Team Eagle**: Om Chauhan, Dhruv Patel, Kshitij Srivastava, Jaimin Koriya, and Anand Tiwari.
 
 ## 🎯 Project Overview
 
