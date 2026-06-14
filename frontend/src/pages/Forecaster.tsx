@@ -121,8 +121,8 @@ export default function Forecaster() {
     const loadingToast = toast.loading('Generating Executive Report...')
     try {
       const payload = {
-        prediction: forecastStats?.mean.toFixed(1) || 0,
-        uncertainty: forecastStats?.std.toFixed(1) || 0,
+        prediction: Number(forecastStats?.mean.toFixed(1)) || 0,
+        uncertainty: Number(forecastStats?.std.toFixed(1)) || 0,
         features: {
           horizon: `${horizonMonths} Months`,
           growth_rate: `${yoyGrowth}%`,
@@ -161,13 +161,13 @@ export default function Forecaster() {
             </p>
           </div>
           <div className="hidden lg:flex items-center gap-5 mt-4 md:mt-0">
-             <button
+              <button
                 onClick={handleDownloadReport}
                 disabled={!forecastResult}
                 className="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Icons.FileBarChart className="w-5 h-5 text-purple-400" />
-                Export 15-Year PDF
+                Generate Scenario Report
               </button>
           </div>
         </div>
