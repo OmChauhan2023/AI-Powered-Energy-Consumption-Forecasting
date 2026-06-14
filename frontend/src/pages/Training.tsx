@@ -51,12 +51,20 @@ export default function Training() {
           )}
 
           {status?.training_in_progress && (
-            <div className="mt-4 h-2 bg-black/5 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-brand rounded-full"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-              />
+            <div className="mt-4">
+              <p className="text-xs text-indigo-500 font-bold mb-2 uppercase tracking-widest animate-pulse">
+                ⚙️ Optimizing ML Ensemble...
+              </p>
+              <div className="h-2 bg-black/5 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-brand rounded-full"
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                />
+              </div>
+              <p className="text-[10px] leading-relaxed text-gray-500 mt-3 font-semibold">
+                The DataAgent is currently engineering 35+ temporal features. Once complete, the TrainingAgent will run Optuna hyperparameter trials across XGBoost, LightGBM, and CatBoost. This process runs in the background and may take up to 3-5 minutes.
+              </p>
             </div>
           )}
 
