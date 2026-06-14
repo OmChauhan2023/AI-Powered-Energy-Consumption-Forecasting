@@ -1,14 +1,20 @@
 # ⚡ Energy Consumption Forecasting System
 **An AI-Powered Multi-Agent ML Pipeline for Hourly Energy Prediction**
 
+> **🏆 Adani Powermind Hackathon - May 2026**
+> 
+> Built by **Team Eagle**: Om Chauhan, Dhruv Patel, Kshitij Srivastava, Jaimin Koriya, and Anand Tiwari.
+
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
 
 ---
 
 ## 🎯 Project Overview
 
-This is a **production-grade energy consumption forecasting system** built for the **Powermind Hackathon** by **Team Eagle**. It predicts hourly electricity consumption for the Australian energy grid with **23% accuracy improvement** over baseline using an ensemble of gradient boosting models.
+This is a **production-grade energy consumption forecasting system** built for the **Powermind Hackathon** by **Team Eagle**. It predicts hourly electricity consumption for the energy grid with a **23% accuracy improvement** over the baseline using a Bayesian-optimized ensemble of gradient boosting models.
 
 **Key Achievement:** Ensemble MAE of **28.33 MWh** (23% improvement from baseline 37.00)
 
@@ -33,6 +39,16 @@ This is a **production-grade energy consumption forecasting system** built for t
 - **Frontend:** React 18 with TypeScript, Vite, Tailwind CSS
 - **Deployment:** Docker & Docker Compose ready
 - **Monitoring:** Real-time drift detection, anomaly detection, performance tracking
+
+### 🎨 The Enterprise "Control Plane" Dashboard (New Addition)
+Overnight, the frontend was completely overhauled into a highly complex, information-dense architectural Control Plane. We prioritized premium UI aesthetics (glassmorphism, subtle animations, slate-monochromatic themes) to create a dashboard that feels "alive."
+
+- **Massive Information Density:** Over 20+ interactive ECharts distributed across 7 distinct operational pages.
+- **Predictor Portal:** A live interface with Sliders and Scenario Buttons (Peak, Off-Peak, Winter) to instantly simulate grid impact and trigger the Ensemble model.
+- **Exploratory Data Analysis (EDA):** Deep-dive visual analytics including Target Variable Distributions, Daily/Monthly Seasonality Profiles, Temperature vs. Load correlations, and Weekly Load tracking.
+- **Pipeline Control:** Live visualization of the Optuna Hyperparameter Landscape (200 trials mapped).
+- **Model Specs Architecture:** A beautiful directed graph mapping the exact workflow of the 4-Agent Orchestrator pipeline.
+- **System Diagnostics:** Real-time polling API Ping Latency monitor and Ensemble Model VRAM loading status blocks.
 
 ### 📈 Advanced Features
 - **Uncertainty Quantification** - Confidence intervals for all predictions
